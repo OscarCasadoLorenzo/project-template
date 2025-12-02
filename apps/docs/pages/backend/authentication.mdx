@@ -1,8 +1,8 @@
-# Authentication & Authorization System
+# Authentication & Authorization
 
 ## Overview
 
-This implementation provides a complete JWT-based authentication and Role-Based Access Control (RBAC) system for the Project Template backend.
+The backend implements a complete JWT-based authentication and Role-Based Access Control (RBAC) system.
 
 ## Features
 
@@ -181,7 +181,7 @@ The system supports three roles defined in the Prisma schema:
 
 1. **Environment Variables**: Ensure `JWT_SECRET` is set in your `.env` file
 
-   ```
+   ```bash
    JWT_SECRET=your-super-secret-key-change-this-in-production
    ```
 
@@ -200,7 +200,7 @@ curl -X POST http://localhost:3000/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
-    "password": "password123",
+    "password": "testPassword123",
     "name": "Test User"
   }'
 ```
@@ -212,49 +212,34 @@ curl -X POST http://localhost:3000/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
-    "password": "password123"
+    "password": "testPassword123"
   }'
 ```
 
 ### Access Protected Route
 
 ```bash
+# Use the access_token from login/register response
 curl -X GET http://localhost:3000/protected \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
-## Error Responses
+## Common Issues
 
-- **401 Unauthorized**: Invalid credentials or missing/invalid token
-- **403 Forbidden**: Valid token but insufficient role permissions
-- **409 Conflict**: User with email already exists (registration)
+### "Unauthorized" Error
 
-## Migration
+- Verify the JWT token is included in the `Authorization` header
+- Check that the token hasn't expired
+- Ensure `JWT_SECRET` is consistent across server restarts
 
-Don't forget to run the database migration to apply the User model changes:
+### "Forbidden" Error
 
-```bash
-cd apps/backend-rest
-npx prisma migrate dev --name add_user_roles
-```
+- User lacks required role for the endpoint
+- Verify user's role in the database
+- Check `@Roles()` decorator matches user's role
 
-## Files Created/Modified
+### Token Not Persisting
 
-### New Files:
-
-- `src/auth/auth.controller.ts` - Authentication endpoints
-- `src/auth/dto/register.dto.ts` - Registration validation
-- `src/auth/dto/login.dto.ts` - Login validation
-- `src/auth/dto/index.ts` - DTO exports
-- `src/auth/guards/roles.guard.ts` - RBAC guard
-- `src/auth/decorators/roles.decorator.ts` - Roles decorator
-- `src/auth/decorators/index.ts` - Decorator exports
-- `src/auth/index.ts` - Module exports
-
-### Modified Files:
-
-- `src/auth/auth.module.ts` - Added controller and exports
-- `src/auth/auth.service.ts` - Enhanced with role support
-- `src/auth/strategies/jwt.strategy.ts` - Added role to JWT payload
-- `src/users/users.service.ts` - Added role field to queries
-- `prisma/schema.prisma` - User model with roles
+- Frontend must store the token (localStorage/cookies)
+- Token must be sent with every authenticated request
+- Check CORS configuration if using different domains

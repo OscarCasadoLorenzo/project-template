@@ -1,6 +1,6 @@
 # Common Module
 
-This module provides shared utilities, DTOs, and services used across the Project Template backend application.
+The Common Module provides shared utilities, DTOs, and services used across the backend application.
 
 ## Features
 
@@ -29,7 +29,7 @@ async findAll(@Query() query: PaginationQueryDto) {
 }
 ```
 
-**Documentation:** See [PAGINATION_GUIDE.md](../../PAGINATION_GUIDE.md) for complete usage guide.
+**Documentation:** See the [Pagination Guide](/backend/pagination-guide) for complete usage details.
 
 ## Structure
 
@@ -100,65 +100,33 @@ Builds Prisma query options from pagination options.
 **Parameters:**
 
 - `options`: PaginationOptions
-- `config?`: { allowedFields?, allowedSortFields?, defaultSort? }
+- `config.allowedFields`: Array of field names that can be selected
+- `config.allowedSortFields`: Array of field names that can be sorted
+- `config.defaultSort`: Default sort configuration
 
-**Returns:** `PrismaFindOptions`
+**Returns:** Prisma query options object
 
-#### validateFields(requestedFields, allowedFields)
+#### buildSearchFilter(search, fields)
 
-Validates requested fields against allowlist.
+Builds a search filter for case-insensitive contains queries.
 
-**Throws:** `BadRequestException` if invalid fields requested
+**Parameters:**
 
-#### buildSearchFilter(searchTerm, searchableFields)
+- `search`: Search string
+- `fields`: Array of field names to search
 
-Builds case-insensitive search filter for multiple fields.
+**Returns:** Prisma where clause
 
-**Returns:** Prisma where clause or undefined
+### Helper Functions
 
-### DTOs
+#### createPaginatedResponse(data, total, limit, offset)
 
-#### PaginationQueryDto
+Creates a standardized paginated response with metadata.
 
-- `limit?: number` - Items per page (1-100, default: 25)
-- `offset?: number` - Items to skip (default: 0)
-- `sort?: string` - Sort fields (e.g., "-createdAt,name")
-- `fields?: string` - Comma-separated field list
-- `search?: string` - Search term
+**Returns:** `PaginatedResponseDto`
 
-#### PaginatedResponseDto<T>
+## Next Steps
 
-- `data: T[]` - Array of items
-- `meta: PaginationMetadata` - Pagination metadata
-
-## Testing
-
-Run tests for the pagination service:
-
-```bash
-npm test -- pagination.service.spec.ts
-```
-
-## Best Practices
-
-1. ✅ Always define field allowlists for security
-2. ✅ Provide default sort order for consistent results
-3. ✅ Use parallel queries for data + count
-4. ✅ Validate all user input
-5. ✅ Document API endpoints with Swagger decorators
-
-## Contributing
-
-When adding new common utilities:
-
-1. Create the utility in the appropriate subfolder
-2. Add comprehensive unit tests
-3. Export from `index.ts`
-4. Update this README
-5. Follow the coding standards in `.ai/rules/`
-
-## Related Documentation
-
-- [Pagination Guide](../../PAGINATION_GUIDE.md) - Complete pagination usage guide
-- [Backend Rules](../../../../.ai/rules/backend.md) - Backend development guidelines
-- [Style Guide](../../../../.ai/rules/style.md) - Code style conventions
+- [Pagination Quick Reference](/backend/pagination-quick-ref) - Fast reference card
+- [Pagination Guide](/backend/pagination-guide) - Complete implementation guide
+- [Pagination Architecture](/backend/pagination-architecture) - System design details

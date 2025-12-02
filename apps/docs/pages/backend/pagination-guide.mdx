@@ -1,8 +1,8 @@
-# Pagination Utility - Usage Guide
+# Pagination Guide
 
 ## Overview
 
-The pagination utility provides a robust, reusable solution for implementing data pagination, filtering, sorting, and field selection across all NestJS services in the Project Template application.
+The pagination utility provides a robust, reusable solution for implementing data pagination, filtering, sorting, and field selection across all NestJS services.
 
 ## Features
 
@@ -29,7 +29,7 @@ export class CharactersController {
   @ApiOperation({ summary: "Get all characters with optional pagination" })
   @ApiQuery({ type: PaginationQueryDto, required: false })
   findAll(
-    @Query() paginationQuery?: PaginationQueryDto,
+    @Query() paginationQuery?: PaginationQueryDto
   ): Promise<Character[] | PaginatedResponseDto<Character>> {
     return this.charactersService.findAll(paginationQuery);
   }
@@ -51,11 +51,11 @@ import {
 export class CharactersService {
   constructor(
     private prisma: PrismaService,
-    private paginationService: PaginationService,
+    private paginationService: PaginationService
   ) {}
 
   async findAll(
-    paginationQuery?: PaginationQueryDto,
+    paginationQuery?: PaginationQueryDto
   ): Promise<Character[] | PaginatedResponseDto<Character>> {
     // Parse pagination options
     const options =
@@ -76,7 +76,7 @@ export class CharactersService {
     // Build search filter
     const searchFilter = this.paginationService.buildSearchFilter(
       options.search,
-      searchableFields,
+      searchableFields
     );
 
     // Execute queries
@@ -277,7 +277,7 @@ const prismaOptions = this.paginationService.buildPrismaOptions(options, {
 const searchableFields = ["characterName", "race", "faction"];
 const searchFilter = this.paginationService.buildSearchFilter(
   options.search,
-  searchableFields,
+  searchableFields
 );
 ```
 
@@ -299,120 +299,60 @@ const [data, total] = await Promise.all([
 ]);
 ```
 
-### 5. Handle Backward Compatibility
-
-```typescript
-// Support both paginated and non-paginated requests
-async findAll(paginationQuery?: PaginationQueryDto) {
-  if (!paginationQuery) {
-    // Return all items for backward compatibility
-    return this.prisma.character.findMany();
-  }
-
-  // Use pagination
-  const options = this.paginationService.parsePaginationQuery(paginationQuery);
-  // ...
-}
-```
-
-## Error Handling
-
-### Validation Errors
-
-```json
-{
-  "statusCode": 400,
-  "message": "Limit cannot exceed 100. Requested: 1000",
-  "error": "Bad Request"
-}
-```
-
-```json
-{
-  "statusCode": 400,
-  "message": "Invalid fields requested: password, secret. Allowed fields: id, name, email",
-  "error": "Bad Request"
-}
-```
-
-## Advanced Usage
-
-### Custom Where Conditions
-
-```typescript
-// Combine search with additional filters
-const searchFilter = this.paginationService.buildSearchFilter(
-  options.search,
-  searchableFields,
-);
-
-const additionalWhere = { isActive: true, level: { gte: 10 } };
-
-const where = this.paginationService.mergeWhereConditions(
-  searchFilter,
-  additionalWhere,
-);
-```
-
-### Nested Sorting
-
-```typescript
-// Sort by nested fields
-const prismaOptions = this.paginationService.buildPrismaOptions(options, {
-  allowedSortFields: ["user.name", "createdAt"],
-});
-```
-
 ## Testing
 
-### Example Test Cases
+### Unit Test Example
 
 ```typescript
-describe("CharactersController Pagination", () => {
-  it("should return paginated results", async () => {
-    const result = await controller.findAll({ limit: 10, offset: 0 });
-    expect(result).toHaveProperty("data");
-    expect(result).toHaveProperty("meta");
+describe("CharactersService", () => {
+  it("should apply pagination correctly", async () => {
+    const query: PaginationQueryDto = {
+      limit: 10,
+      offset: 0,
+      sort: "-level",
+    };
+
+    const result = await service.findAll(query);
+
+    expect(result.meta.limit).toBe(10);
+    expect(result.meta.offset).toBe(0);
     expect(result.data.length).toBeLessThanOrEqual(10);
-  });
-
-  it("should enforce maximum limit", async () => {
-    await expect(controller.findAll({ limit: 1000 })).rejects.toThrow(
-      "Limit cannot exceed 100",
-    );
-  });
-
-  it("should validate field names", async () => {
-    await expect(
-      controller.findAll({ fields: "id,invalidField" }),
-    ).rejects.toThrow("Invalid fields requested");
   });
 });
 ```
 
 ## Migration Guide
 
-### Migrating Existing Services
+### From Existing Endpoint
 
-1. **Add PaginationService dependency**
-2. **Update service method signature**
-3. **Implement pagination logic**
-4. **Update controller**
-5. **Test thoroughly**
+```typescript
+// Before
+@Get()
+async findAll() {
+  return this.prisma.character.findMany();
+}
 
-See the `CharactersService` implementation for a complete example.
+// After
+@Get()
+@ApiQuery({ type: PaginationQueryDto, required: false })
+async findAll(@Query() query?: PaginationQueryDto) {
+  const options = this.paginationService.parsePaginationQuery(query);
+  const prismaOptions = this.paginationService.buildPrismaOptions(options, {
+    allowedFields: ['id', 'name'],
+    allowedSortFields: ['name', 'createdAt'],
+  });
 
-## Performance Considerations
+  const [data, total] = await Promise.all([
+    this.prisma.character.findMany(prismaOptions),
+    this.prisma.character.count(),
+  ]);
 
-- **Field selection** reduces payload size by up to 80%
-- **Pagination** prevents loading entire tables into memory
-- **Indexed sorting** ensures fast query performance
-- **Count query** runs in parallel with data query
+  return createPaginatedResponse(data, total, options.limit, options.offset);
+}
+```
 
-## Related Files
+## Related Documentation
 
-- `/src/common/dto/pagination-query.dto.ts` - Request DTO
-- `/src/common/dto/paginated-response.dto.ts` - Response DTO
-- `/src/common/services/pagination.service.ts` - Core service
-- `/src/common/decorators/paginate.decorator.ts` - Custom decorator
-- `/src/characters/characters.service.ts` - Example implementation
+- [Quick Reference](/backend/pagination-quick-ref) - Fast reference card
+- [Architecture](/backend/pagination-architecture) - System design
+- [Common Module](/backend/common-module) - Module overview

@@ -19,7 +19,7 @@ The Form Builder follows a layered architecture separating concerns:
 
 ```
 form-builder/
-├── README.md           # This documentation
+├── README.md           # Documentation
 ├── index.ts           # Main exports and public API
 ├── types.ts           # TypeScript type definitions
 ├── schema.ts          # Validation schemas and helper utilities
@@ -63,41 +63,41 @@ Two levels of validation:
 ### Basic Usage
 
 ```tsx
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   FormBuilder,
   createFormConfig,
   createSection,
   createField,
-} from '@/utils/form-builder';
+} from "@/utils/form-builder";
 
 // 1. Define your form configuration
 const myFormConfig = createFormConfig({
-  title: 'User Registration',
-  description: 'Create a new user account',
+  title: "User Registration",
+  description: "Create a new user account",
   sections: [
     createSection({
-      title: 'Personal Information',
+      title: "Personal Information",
       columns: 2,
       fields: [
-        createField('text', {
-          name: 'firstName',
-          label: 'First Name',
+        createField("text", {
+          name: "firstName",
+          label: "First Name",
           required: true,
-          placeholder: 'Enter your first name',
+          placeholder: "Enter your first name",
         }),
-        createField('email', {
-          name: 'email',
-          label: 'Email Address',
+        createField("email", {
+          name: "email",
+          label: "Email Address",
           required: true,
-          placeholder: 'user@example.com',
+          placeholder: "user@example.com",
         }),
       ],
     }),
   ],
   submitButton: {
-    text: 'Create Account',
+    text: "Create Account",
   },
 });
 
@@ -112,7 +112,7 @@ function MyFormComponent() {
   });
 
   const handleSubmit = (data) => {
-    console.log('Form submitted:', data);
+    console.log("Form submitted:", data);
   };
 
   return (
@@ -125,11 +125,11 @@ function MyFormComponent() {
 
 ### Types
 
-#### `FormConfig`
+#### FormConfig
 
 Main configuration object for the entire form.
 
-```tsx
+```typescript
 interface FormConfig {
   title?: string; // Form title
   description?: string; // Form description
@@ -140,11 +140,11 @@ interface FormConfig {
 }
 ```
 
-#### `FormSectionConfig`
+#### FormSectionConfig
 
 Configuration for a form section (group of fields).
 
-```tsx
+```typescript
 interface FormSectionConfig {
   title?: string; // Section title
   description?: string; // Section description
@@ -154,11 +154,11 @@ interface FormSectionConfig {
 }
 ```
 
-#### `FieldConfig`
+#### FieldConfig
 
 Base configuration for form fields (extended by specific field types).
 
-```tsx
+```typescript
 interface BaseFieldConfig {
   name: string; // Field name (must be unique)
   label: string; // Field label
@@ -176,22 +176,22 @@ interface BaseFieldConfig {
 
 #### Text Fields
 
-```tsx
-createField('text', {
-  name: 'username',
-  label: 'Username',
+```typescript
+createField("text", {
+  name: "username",
+  label: "Username",
   maxLength: 50,
   minLength: 3,
-  placeholder: 'Enter username',
+  placeholder: "Enter username",
 });
 ```
 
 #### Number Fields
 
-```tsx
-createField('number', {
-  name: 'age',
-  label: 'Age',
+```typescript
+createField("number", {
+  name: "age",
+  label: "Age",
   min: 18,
   max: 120,
   step: 1,
@@ -200,14 +200,14 @@ createField('number', {
 
 #### Select Fields
 
-```tsx
-createField('select', {
-  name: 'country',
-  label: 'Country',
+```typescript
+createField("select", {
+  name: "country",
+  label: "Country",
   options: [
-    { value: 'us', label: 'United States' },
-    { value: 'ca', label: 'Canada' },
-    { value: 'mx', label: 'Mexico' },
+    { value: "us", label: "United States" },
+    { value: "ca", label: "Canada" },
+    { value: "mx", label: "Mexico" },
   ],
   multiple: false, // Set to true for multi-select
 });
@@ -215,55 +215,66 @@ createField('select', {
 
 #### Radio Groups
 
-```tsx
-createField('radio', {
-  name: 'gender',
-  label: 'Gender',
+```typescript
+createField("radio", {
+  name: "gender",
+  label: "Gender",
   options: [
-    { value: 'male', label: 'Male' },
-    { value: 'female', label: 'Female' },
-    { value: 'other', label: 'Other' },
+    { value: "male", label: "Male" },
+    { value: "female", label: "Female" },
+    { value: "other", label: "Other" },
   ],
+});
+```
+
+#### Textarea
+
+```typescript
+createField("textarea", {
+  name: "backstory",
+  label: "Character Backstory",
+  rows: 5,
+  placeholder: "Tell us about your character...",
 });
 ```
 
 ### Utility Functions
 
-#### `createValidationSchema(config: FormConfig)`
+#### createValidationSchema(config: FormConfig)
 
 Automatically generates a Zod validation schema from form configuration.
 
-```tsx
+```typescript
 const schema = createValidationSchema(myFormConfig);
 ```
 
-#### `extractDefaultValues(config: FormConfig)`
+#### extractDefaultValues(config: FormConfig)
 
 Extracts default values from form configuration for React Hook Form.
 
-```tsx
+```typescript
 const defaultValues = extractDefaultValues(myFormConfig);
 ```
 
-#### `createField<T>(type: T, config: FieldConfig)`
+#### createField (type-safe helper)
 
-Type-safe field creation helper.
+Type-safe field creation helper with generic type parameter.
 
-```tsx
-const emailField = createField('email', {
-  name: 'email',
-  label: 'Email',
+```typescript
+const emailField = createField("email", {
+  name: "email",
+  label: "Email",
   required: true,
 });
 ```
 
-#### `createSection(config: SectionConfig)`
+#### createSection(config: SectionConfig)
 
 Creates a form section with proper typing.
 
-```tsx
+```typescript
 const personalSection = createSection({
-  title: 'Personal Information',
+  title: "Personal Information",
   columns: 2,
   fields: [
     /* fields */
@@ -277,16 +288,16 @@ const personalSection = createSection({
 
 You can provide custom Zod validation for any field:
 
-```tsx
-createField('text', {
-  name: 'password',
-  label: 'Password',
-  type: 'password',
+```typescript
+createField("text", {
+  name: "password",
+  label: "Password",
+  type: "password",
   validation: z
     .string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Password must contain uppercase letter')
-    .regex(/[0-9]/, 'Password must contain a number'),
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain uppercase letter")
+    .regex(/[0-9]/, "Password must contain a number"),
 });
 ```
 
@@ -294,196 +305,89 @@ createField('text', {
 
 Forms can be built dynamically based on external data:
 
-```tsx
+```typescript
 function createDynamicForm(fieldDefinitions) {
   const fields = fieldDefinitions.map((def) =>
     createField(def.type, {
       name: def.name,
       label: def.label,
       required: def.required,
-      // ... other properties
     })
   );
 
   return createFormConfig({
-    title: 'Dynamic Form',
+    title: "Dynamic Form",
     sections: [
       createSection({
         fields,
         columns: 2,
       }),
     ],
-    submitButton: { text: 'Submit' },
+    submitButton: { text: "Submit" },
   });
 }
 ```
 
 ### Complex Form Example
 
-```tsx
+```typescript
 const characterFormConfig = createFormConfig({
-  title: 'Character Sheet',
-  description: 'Create or edit your character',
+  title: "Character Sheet",
+  description: "Create or edit your character",
   sections: [
     createSection({
-      title: 'Basic Information',
+      title: "Basic Information",
       columns: 2,
       fields: [
-        createField('text', {
-          name: 'characterName',
-          label: 'Character Name',
+        createField("text", {
+          name: "characterName",
+          label: "Character Name",
           required: true,
         }),
-        createField('select', {
-          name: 'class',
-          label: 'Character Class',
+        createField("select", {
+          name: "class",
+          label: "Character Class",
           options: [
-            { value: 'warrior', label: 'Warrior' },
-            { value: 'mage', label: 'Mage' },
-            { value: 'rogue', label: 'Rogue' },
+            { value: "warrior", label: "Warrior" },
+            { value: "mage", label: "Mage" },
+            { value: "rogue", label: "Rogue" },
           ],
           required: true,
         }),
       ],
     }),
     createSection({
-      title: 'Attributes',
+      title: "Attributes",
       columns: 3,
       fields: [
-        createField('number', {
-          name: 'strength',
-          label: 'Strength',
+        createField("number", {
+          name: "strength",
+          label: "Strength",
           min: 1,
           max: 20,
           defaultValue: 10,
         }),
-        createField('number', {
-          name: 'dexterity',
-          label: 'Dexterity',
+        createField("number", {
+          name: "dexterity",
+          label: "Dexterity",
           min: 1,
           max: 20,
           defaultValue: 10,
         }),
-        createField('number', {
-          name: 'intelligence',
-          label: 'Intelligence',
+        createField("number", {
+          name: "intelligence",
+          label: "Intelligence",
           min: 1,
           max: 20,
           defaultValue: 10,
-        }),
-      ],
-    }),
-    createSection({
-      title: 'Background',
-      columns: 1,
-      fields: [
-        createField('textarea', {
-          name: 'backstory',
-          label: 'Character Backstory',
-          rows: 5,
-          placeholder: 'Tell us about your character...',
         }),
       ],
     }),
   ],
   submitButton: {
-    text: 'Save Character',
-    className: 'bg-blue-600 hover:bg-blue-700',
-  },
-  cancelButton: {
-    text: 'Cancel',
+    text: "Save Character",
   },
 });
-```
-
-## Extending the Form Builder
-
-### Adding New Field Types
-
-1. **Update Types** (`types.ts`):
-
-```tsx
-export interface CustomFieldConfig extends BaseFieldConfig {
-  type: 'custom-field';
-  customProperty?: string;
-}
-
-// Add to FieldConfig union
-export type FieldConfig =
-  | TextFieldConfig
-  | NumberFieldConfig
-  | CustomFieldConfig; // Add your new type
-```
-
-2. **Update Schema** (`schema.ts`):
-
-```tsx
-function createDefaultValidation(field: FieldConfig): z.ZodType<any> {
-  // ...existing code...
-
-  switch (field.type) {
-    // ...existing cases...
-    case 'custom-field':
-      schema = z.string(); // Define validation
-      break;
-  }
-}
-```
-
-3. **Add Field Component** (`FormField.tsx`):
-
-```tsx
-const CustomFieldComponent: React.FC<FieldProps> = ({
-  config,
-  form,
-  className,
-}) => {
-  const fieldConfig = config as Extract<FieldConfig, { type: 'custom-field' }>;
-  // Implementation
-};
-
-// Add to main FormField component
-export const FormField: React.FC<FieldProps<FieldValues>> = ({
-  config,
-  form,
-  className,
-}) => {
-  switch (config.type) {
-    // ...existing cases...
-    case 'custom-field':
-      return (
-        <CustomFieldComponent
-          config={config}
-          form={form}
-          className={className}
-        />
-      );
-  }
-};
-```
-
-### Custom Field Styling
-
-Fields can be styled using CSS classes:
-
-```tsx
-createField('text', {
-  name: 'highlighted',
-  label: 'Important Field',
-  className: 'border-2 border-yellow-400 bg-yellow-50',
-});
-```
-
-### Form-Level Custom Content
-
-You can inject custom content between sections:
-
-```tsx
-<FormBuilder config={myFormConfig} form={form} onSubmit={handleSubmit}>
-  <div className='my-4 p-4 bg-blue-50 rounded'>
-    <p>Custom content between form sections</p>
-  </div>
-</FormBuilder>
 ```
 
 ## Best Practices
@@ -517,14 +421,14 @@ You can inject custom content between sections:
 
 ### 5. Error Handling
 
-```tsx
+```typescript
 const handleSubmit = async (data) => {
   try {
     await submitData(data);
-    toast.success('Form submitted successfully!');
+    toast.success("Form submitted successfully!");
   } catch (error) {
-    toast.error('Failed to submit form');
-    console.error('Form submission error:', error);
+    toast.error("Failed to submit form");
+    console.error("Form submission error:", error);
   }
 };
 ```
@@ -533,7 +437,7 @@ const handleSubmit = async (data) => {
 
 The Form Builder is fully typed and provides excellent TypeScript support:
 
-```tsx
+```typescript
 // Type-safe form data
 type MyFormData = {
   name: string;
@@ -558,6 +462,49 @@ const handleSubmit = (data: MyFormData) => {
 };
 ```
 
+## Extending the Form Builder
+
+### Adding New Field Types
+
+1. **Update Types** (`types.ts`):
+
+```typescript
+export interface CustomFieldConfig extends BaseFieldConfig {
+  type: "custom-field";
+  customProperty?: string;
+}
+
+// Add to FieldConfig union
+export type FieldConfig =
+  | TextFieldConfig
+  | NumberFieldConfig
+  | CustomFieldConfig;
+```
+
+2. **Update Schema** (`schema.ts`):
+
+```typescript
+function createDefaultValidation(field: FieldConfig): z.ZodType<any> {
+  switch (field.type) {
+    case "custom-field":
+      schema = z.string(); // Define validation
+      break;
+  }
+}
+```
+
+3. **Add Field Component** (`FormField.tsx`):
+
+```typescript
+const CustomFieldComponent: React.FC<FieldProps> = ({
+  config,
+  form,
+  className,
+}) => {
+  // Implementation
+};
+```
+
 ## Troubleshooting
 
 ### Common Issues
@@ -571,51 +518,19 @@ const handleSubmit = (data: MyFormData) => {
 
 Enable form debugging:
 
-```tsx
+```typescript
 const form = useForm({
-  mode: 'onChange', // See validation in real-time
-  // Add for debugging
+  mode: "onChange", // See validation in real-time
   defaultValues: extractDefaultValues(config),
 });
 
 // Log form state
-console.log('Form state:', form.formState);
-console.log('Form values:', form.getValues());
-console.log('Form errors:', form.formState.errors);
+console.log("Form state:", form.formState);
+console.log("Form values:", form.getValues());
+console.log("Form errors:", form.formState.errors);
 ```
 
-## Migration Guide
+## Related Documentation
 
-### From Manual Forms
-
-1. Extract field definitions from JSX
-2. Create field configurations using `createField`
-3. Group fields into sections using `createSection`
-4. Replace manual validation with Zod schemas
-5. Update submit handlers to use form data directly
-
-### Version Updates
-
-When updating the Form Builder:
-
-1. Check for breaking changes in field configurations
-2. Update type definitions if needed
-3. Test form validation thoroughly
-4. Verify UI component compatibility
-
-## Contributing
-
-When contributing to the Form Builder:
-
-1. **Adding Field Types**: Follow the extension pattern outlined above
-2. **Bug Fixes**: Include test cases and examples
-3. **Documentation**: Update this README for any API changes
-4. **Breaking Changes**: Increment version and provide migration guide
-
-## Examples
-
-See the `characterFormConfig.ts` file for a real-world example of a complex form configuration using the Form Builder with multiple sections, various field types, and comprehensive validation.
-
----
-
-For more information or support, please refer to the project documentation or create an issue in the repository.
+- [Frontend Architecture](/frontend/architecture) - Overall frontend patterns
+- [UI Package](/packages/ui) - Shared UI components

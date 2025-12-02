@@ -23,6 +23,11 @@
       "dependsOn": ["^test"],
       "outputs": ["coverage/**"],
       "cache": true
+    },
+    "lint:md": {
+      "dependsOn": [],
+      "outputs": [],
+      "cache": true
     }
   }
 }

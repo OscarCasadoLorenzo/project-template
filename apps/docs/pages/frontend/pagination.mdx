@@ -1,0 +1,394 @@
+# Frontend Pagination Support
+
+## Overview
+
+The frontend supports the backend's paginated API responses while maintaining backward compatibility with existing code.
+
+## Features
+
+- ✅ Automatic data extraction from paginated responses
+- ✅ Type-safe pagination parameters
+- ✅ Backward compatible with non-paginated responses
+- ✅ Helper utilities for pagination metadata
+- ✅ Search and filtering support
+- ✅ Multi-field sorting
+
+## Type Definitions
+
+### PaginationMeta
+
+Metadata returned in paginated responses:
+
+```typescript
+export interface PaginationMeta {
+  total: number; // Total items matching query
+  count: number; // Items in current response
+  limit: number; // Items per page
+  offset: number; // Items skipped
+  hasMore: boolean; // More items available
+  currentPage: number; // Current page (1-based)
+  totalPages: number; // Total number of pages
+}
+```
+
+### PaginatedResponse
+
+Standardized response format:
+
+```typescript
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: PaginationMeta;
+}
+```
+
+### MaybePaginated
+
+Union type for backward compatibility:
+
+```typescript
+export type MaybePaginated<T> = T[] | PaginatedResponse<T>;
+```
+
+## Pagination Utilities
+
+### isPaginatedResponse
+
+Check if a response is paginated:
+
+```typescript
+import { isPaginatedResponse } from "@/lib/pagination";
+
+if (isPaginatedResponse(response)) {
+  console.log("Total items:", response.meta.total);
+}
+```
+
+### extractData
+
+Extract data array from any response type:
+
+```typescript
+import { extractData } from "@/lib/pagination";
+
+// Works with both formats
+const characters = extractData(response); // Always returns T[]
+```
+
+### getPaginationMeta
+
+Get pagination metadata if available:
+
+```typescript
+import { getPaginationMeta } from "@/lib/pagination";
+
+const meta = getPaginationMeta(response);
+if (meta) {
+  console.log(`Page ${meta.currentPage} of ${meta.totalPages}`);
+}
+```
+
+## Usage Examples
+
+### Basic Usage (No Changes Required)
+
+Existing code continues to work without modifications:
+
+```tsx
+function CharacterList() {
+  const { data, isLoading } = useCharacters();
+
+  if (isLoading) return <LoadingSpinner />;
+
+  return (
+    <div>
+      {data?.map((char) => (
+        <div key={char.id}>{char.characterName}</div>
+      ))}
+    </div>
+  );
+}
+```
+
+### With Pagination Parameters
+
+```tsx
+function CharacterList() {
+  const { data, isLoading } = useCharacters({
+    limit: 10, // Items per page
+    offset: 0, // Skip N items
+    sort: "-level", // Sort descending by level
+    search: "warrior", // Search filter
+  });
+
+  if (isLoading) return <LoadingSpinner />;
+
+  return (
+    <div>
+      {data?.map((char) => (
+        <CharacterCard key={char.id} character={char} />
+      ))}
+    </div>
+  );
+}
+```
+
+### With Pagination Controls
+
+```tsx
+function PaginatedCharacterList() {
+  const [page, setPage] = useState(1);
+  const limit = 10;
+
+  const { data, isLoading } = useCharacters({
+    limit,
+    offset: (page - 1) * limit,
+    sort: "-createdAt",
+  });
+
+  return (
+    <div>
+      {data?.map((char) => (
+        <CharacterCard key={char.id} character={char} />
+      ))}
+
+      <Pagination currentPage={page} onPageChange={setPage} />
+    </div>
+  );
+}
+```
+
+### With Search
+
+```tsx
+function SearchableCharacterList() {
+  const [search, setSearch] = useState("");
+
+  const { data, isLoading } = useCharacters({
+    search,
+    sort: "characterName",
+  });
+
+  return (
+    <div>
+      <input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search characters..."
+      />
+      {data?.map((char) => (
+        <CharacterCard key={char.id} character={char} />
+      ))}
+    </div>
+  );
+}
+```
+
+### Accessing Pagination Metadata (Advanced)
+
+If you need access to pagination metadata:
+
+```typescript
+import { useApiQuery } from '@/hooks/use-api-query';
+import { getPaginationMeta, extractData } from '@/lib/pagination';
+import { Character, MaybePaginated } from '@/types';
+
+function CharacterListWithMeta() {
+  const { data: response } = useApiQuery<MaybePaginated<Character>>(
+    '/characters',
+    { params: { limit: 10 } }
+  );
+
+  const characters = response ? extractData(response) : [];
+  const meta = response ? getPaginationMeta(response) : null;
+
+  return (
+    <div>
+      {characters.map(char => (
+        <CharacterCard key={char.id} character={char} />
+      ))}
+
+      {meta && (
+        <div className="text-sm text-gray-600">
+          Showing {meta.count} of {meta.total} characters
+          (Page {meta.currentPage} of {meta.totalPages})
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+## API Response Formats
+
+### Paginated Response (New)
+
+```json
+{
+  "data": [
+    {
+      "id": "...",
+      "characterName": "...",
+      "userId": "...",
+      "level": 5
+    }
+  ],
+  "meta": {
+    "total": 150,
+    "count": 25,
+    "limit": 25,
+    "offset": 0,
+    "hasMore": true,
+    "currentPage": 1,
+    "totalPages": 6
+  }
+}
+```
+
+### Legacy Response (Still Supported)
+
+```json
+[
+  {
+    "id": "...",
+    "characterName": "...",
+    "userId": "...",
+    "level": 5
+  }
+]
+```
+
+## Hook Implementation
+
+The `useCharacters` hook automatically handles pagination:
+
+```typescript
+export function useCharacters(params?: PaginationParams) {
+  return useQuery({
+    queryKey: ["characters", params],
+    queryFn: async () => {
+      const response = await characterService.getCharacters(params);
+      return extractData(response); // Auto-extract data array
+    },
+  });
+}
+```
+
+## Pagination Parameters
+
+```typescript
+interface PaginationParams {
+  limit?: number; // Items per page (default: 25, max: 100)
+  offset?: number; // Items to skip (default: 0)
+  sort?: string; // Sort field (prefix with - for descending)
+  fields?: string; // Comma-separated field list
+  search?: string; // Search query
+}
+```
+
+### Sorting Examples
+
+```typescript
+// Sort by level descending
+{
+  sort: "-level";
+}
+
+// Sort by name ascending
+{
+  sort: "characterName";
+}
+
+// Multi-field sort: level desc, then name asc
+{
+  sort: "-level,characterName";
+}
+```
+
+### Field Selection Examples
+
+```typescript
+// Get only specific fields
+{
+  fields: "id,characterName,level";
+}
+
+// Reduce payload size for list views
+{
+  fields: "id,characterName";
+}
+```
+
+## Migration Notes
+
+### Breaking Changes
+
+**Field Name Changes:**
+
+- `playerId` → `userId` in Character type
+
+**Example Migration:**
+
+```typescript
+// Before
+const charactersByPlayer = characters.filter((c) => c.playerId === playerId);
+
+// After
+const charactersByPlayer = characters.filter((c) => c.userId === userId);
+```
+
+### Mutation Hooks
+
+Mutation hooks now use proper TypeScript types:
+
+```typescript
+// Before
+const { mutate } = useUpdateCharacter();
+mutate({ id: "123", data: { level: 5 } }); // any type
+
+// After
+const { mutate } = useUpdateCharacter();
+mutate({ id: "123", data: { level: 5 } }); // Partial<Character> type
+```
+
+## Testing
+
+### Manual Testing Steps
+
+1. **List Items**: Verify items load correctly
+2. **Pagination**: Test page navigation works
+3. **Search**: Verify search filters correctly
+4. **Sorting**: Test sort controls work
+5. **Field Selection**: Verify only requested fields are returned
+
+### Example Test
+
+```typescript
+describe("useCharacters", () => {
+  it("extracts data from paginated response", async () => {
+    const { result } = renderHook(() => useCharacters({ limit: 10 }));
+
+    await waitFor(() => {
+      expect(result.current.data).toBeInstanceOf(Array);
+      expect(result.current.data?.length).toBeLessThanOrEqual(10);
+    });
+  });
+});
+```
+
+## Future Enhancements
+
+Consider implementing:
+
+1. **Pagination Controls**: Add next/previous buttons and page numbers
+2. **Items Per Page Selector**: Let users choose 10, 25, 50, or 100 items
+3. **Search Debouncing**: Add debounce to search input for better performance
+4. **Loading States**: Show skeleton loaders during pagination transitions
+5. **Infinite Scroll**: Alternative to traditional pagination
+6. **Sort Controls**: UI for changing sort field and direction
+
+## Related Documentation
+
+- [Backend Pagination Guide](/backend/pagination-guide) - Backend implementation
+- [Frontend Architecture](/frontend/architecture) - Frontend architecture patterns
+- [Common Module](/backend/common-module) - Backend common utilities

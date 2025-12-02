@@ -102,35 +102,101 @@ GET /api?search=elf&sort=-level&limit=10&fields=id,name
 }
 ```
 
-## 💡 Common Patterns
-
-### With Search
+## ⚙️ Configuration Options
 
 ```typescript
-const searchFilter = this.paginationService.buildSearchFilter(options.search, [
-  "name",
-  "email",
-]);
-```
-
-### With Additional Filters
-
-```typescript
-const where = this.paginationService.mergeWhereConditions(searchFilter, {
-  isActive: true,
-  level: { gte: 10 },
+buildPrismaOptions(options, {
+  allowedFields: ["id", "name"], // Selectable fields
+  allowedSortFields: ["name", "date"], // Sortable fields
+  defaultSort: [{ field: "createdAt", order: "desc" }], // Default sort
 });
 ```
+
+## 🔍 Search Implementation
+
+```typescript
+const searchableFields = ["name", "description"];
+const searchFilter = this.paginationService.buildSearchFilter(
+  options.search,
+  searchableFields
+);
+
+await this.prisma.model.findMany({
+  ...prismaOptions,
+  where: searchFilter,
+});
+```
+
+## 📈 Limits
+
+- **Default limit**: 25 items
+- **Maximum limit**: 100 items
+- **Minimum limit**: 1 item
+
+## 💡 Common Patterns
 
 ### With Relations
 
 ```typescript
-this.prisma.model.findMany({
+const [data, total] = await Promise.all([
+  this.prisma.model.findMany({
+    ...prismaOptions,
+    include: prismaOptions.select ? undefined : { relation: true },
+  }),
+  this.prisma.model.count({ where }),
+]);
+```
+
+### With Custom Filters
+
+```typescript
+const customWhere = { isActive: true };
+const searchFilter = this.paginationService.buildSearchFilter(options.search, [
+  "name",
+]);
+
+const where = this.paginationService.mergeWhereConditions(
+  customWhere,
+  searchFilter
+);
+
+await this.prisma.model.findMany({
   ...prismaOptions,
-  include: prismaOptions.select ? undefined : { relation: true },
+  where,
 });
 ```
 
-## 📚 Full Documentation
+## 🚨 Common Errors
 
-See [PAGINATION_GUIDE.md](./PAGINATION_GUIDE.md) for complete documentation.
+### Invalid Fields
+
+```bash
+GET /api?fields=id,password
+# ❌ Error: Invalid fields: password
+```
+
+**Solution**: Only request fields in `allowedFields`
+
+### Exceeding Max Limit
+
+```bash
+GET /api?limit=1000
+# ❌ Error: Limit cannot exceed 100
+```
+
+**Solution**: Use limit ≤ 100
+
+### Invalid Sort Field
+
+```bash
+GET /api?sort=-password
+# ❌ Error: Invalid sort field: password
+```
+
+**Solution**: Only sort by fields in `allowedSortFields`
+
+## 📚 Related Documentation
+
+- [Full Guide](/backend/pagination-guide)
+- [Architecture](/backend/pagination-architecture)
+- [Common Module](/backend/common-module)

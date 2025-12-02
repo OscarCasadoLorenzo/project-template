@@ -1,0 +1,210 @@
+---
+title: UI Package
+description: Shared React component library built with shadcn/ui
+---
+
+# UI Package (@project-template/ui)
+
+The UI package provides a collection of reusable React components built with **shadcn/ui**, Radix UI primitives, and Tailwind CSS.
+
+## Overview
+
+Located at `packages/ui/`, this package serves as the component library for all frontend applications in the monorepo.
+
+## Technology Stack
+
+- **Components**: shadcn/ui + Radix UI
+- **Styling**: Tailwind CSS
+- **Build Tool**: tsup
+- **Testing**: Jest + React Testing Library
+
+## Installation
+
+The package is automatically available in the monorepo:
+
+```typescript
+import { Button, Dialog, Input } from "@project-template/ui";
+```
+
+## Available Components
+
+### Primitives
+
+All shadcn/ui components are available:
+
+- **Layout**: Card, Separator, Aspect Ratio, Sidebar
+- **Forms**: Input, Textarea, Select, Checkbox, Radio Group, Switch
+- **Buttons**: Button, Toggle, Toggle Group
+- **Navigation**: Navigation Menu, Breadcrumb, Menubar, Tabs
+- **Feedback**: Alert, Toast, Dialog, Alert Dialog, Sheet
+- **Data Display**: Table, Avatar, Badge, Calendar, Progress
+- **Overlays**: Popover, Tooltip, Hover Card, Context Menu, Dropdown Menu
+- **Advanced**: Command, Carousel, Chart, Collapsible, Drawer, Resizable
+
+### Example Usage
+
+```tsx
+import { Button } from "@project-template/ui";
+
+export function MyComponent() {
+  return (
+    <Button variant="default" size="lg">
+      Click me
+    </Button>
+  );
+}
+```
+
+## Component Variants
+
+Components support multiple variants for flexibility:
+
+```tsx
+// Button variants
+<Button variant="default">Default</Button>
+<Button variant="destructive">Delete</Button>
+<Button variant="outline">Cancel</Button>
+<Button variant="ghost">Ghost</Button>
+<Button variant="link">Link</Button>
+
+// Button sizes
+<Button size="sm">Small</Button>
+<Button size="default">Default</Button>
+<Button size="lg">Large</Button>
+<Button size="icon"><Icon /></Button>
+```
+
+## Customization
+
+### Extending Components
+
+Create custom variants using `class-variance-authority`:
+
+```typescript
+import { cva } from "class-variance-authority";
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        custom: "bg-gradient-to-r from-purple-500 to-pink-500",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        custom: "h-14 px-6 py-3",
+      },
+    },
+  }
+);
+```
+
+### Theming
+
+Components respect the Tailwind theme:
+
+```typescript
+// tailwind.config.js
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+      },
+    },
+  },
+};
+```
+
+## Development
+
+### Running Tests
+
+```bash
+npm run test --filter=@project-template/ui
+```
+
+### Building
+
+```bash
+npm run build --filter=@project-template/ui
+```
+
+### Adding New Components
+
+1. Use shadcn CLI:
+
+   ```bash
+   npx shadcn-ui@latest add <component-name>
+   ```
+
+2. Export in `src/index.ts`:
+
+   ```typescript
+   export { Button } from "./primitives/button";
+   ```
+
+3. Write tests:
+
+   ```typescript
+   import { render } from '@testing-library/react';
+   import { Button } from './button';
+
+   describe('Button', () => {
+     it('renders correctly', () => {
+       const { getByText } = render(<Button>Click</Button>);
+       expect(getByText('Click')).toBeInTheDocument();
+     });
+   });
+   ```
+
+## Best Practices
+
+1. **Use semantic variants** - Choose variants that convey meaning
+2. **Compose components** - Build complex UIs from simple components
+3. **Follow accessibility** - Radix UI provides ARIA attributes
+4. **Test components** - Write unit tests for all components
+5. **Document props** - Use JSDoc for prop descriptions
+
+## Accessibility
+
+All components follow WAI-ARIA standards:
+
+- ✅ Keyboard navigation
+- ✅ Screen reader support
+- ✅ Focus management
+- ✅ ARIA attributes
+
+## Example: Building a Form
+
+```tsx
+import { Button, Input, Label, Card } from "@project-template/ui";
+
+export function LoginForm() {
+  return (
+    <Card className="w-full max-w-md p-6">
+      <div className="space-y-4">
+        <div>
+          <Label htmlFor="email">Email</Label>
+          <Input id="email" type="email" placeholder="you@example.com" />
+        </div>
+        <div>
+          <Label htmlFor="password">Password</Label>
+          <Input id="password" type="password" />
+        </div>
+        <Button className="w-full">Sign In</Button>
+      </div>
+    </Card>
+  );
+}
+```
+
+## Resources
+
+- [shadcn/ui Documentation](https://ui.shadcn.com/)
+- [Radix UI Documentation](https://www.radix-ui.com/)
+- [Tailwind CSS Documentation](https://tailwindcss.com/)

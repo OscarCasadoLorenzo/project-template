@@ -1,0 +1,282 @@
+---
+title: Netlify Deployment
+description: Deploying the monorepo to Netlify
+---
+
+# Netlify Deployment
+
+This guide covers deploying the Project Template monorepo to Netlify, including the frontend application and documentation site.
+
+## Overview
+
+The monorepo supports deployment to Netlify with:
+
+- **Frontend App**: `apps/frontend` → Main application
+- **Documentation**: `apps/docs` → Documentation site
+- **Automatic Deployments**: On push to main/develop branches
+- **Preview Deployments**: On pull requests
+
+## Configuration
+
+### netlify.toml
+
+The project includes a `netlify.toml` configuration file:
+
+```toml
+[build]
+  base = "/"
+  publish = "apps/frontend/out"
+  command = "npm run build --filter=@project-template/frontend"
+
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_VERSION = "9"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://your-backend-url.com/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Documentation site
+[context.docs]
+  base = "/"
+  publish = "apps/docs/out"
+  command = "npm run build --filter=@project-template/docs"
+```
+
+## Setup Steps
+
+### 1. Connect Repository
+
+1. Go to [Netlify](https://app.netlify.com/)
+2. Click **"Add new site"** → **"Import an existing project"**
+3. Connect your GitHub repository
+4. Select `OscarCasadoLorenzo/project-template`
+
+### 2. Configure Build Settings
+
+**For Frontend App**:
+
+- **Base directory**: `/`
+- **Build command**: `npm run build --filter=@project-template/frontend`
+- **Publish directory**: `apps/frontend/out`
+- **Node version**: 18
+
+**For Documentation Site** (separate site):
+
+- **Base directory**: `/`
+- **Build command**: `npm run build --filter=@project-template/docs`
+- **Publish directory**: `apps/docs/out`
+- **Node version**: 18
+
+### 3. Environment Variables
+
+Add the following environment variables in Netlify dashboard:
+
+**Frontend**:
+
+```
+NEXT_PUBLIC_API_URL=https://your-backend.com
+NODE_ENV=production
+```
+
+**Backend URL**: Point to your deployed backend (Render, Railway, etc.)
+
+### 4. Deploy Contexts
+
+Configure different contexts for branches:
+
+```toml
+# Production (main branch)
+[context.production]
+  command = "npm run build --filter=@project-template/frontend"
+  environment = { NEXT_PUBLIC_API_URL = "https://api.production.com" }
+
+# Staging (develop branch)
+[context.develop]
+  command = "npm run build --filter=@project-template/frontend"
+  environment = { NEXT_PUBLIC_API_URL = "https://api.staging.com" }
+
+# Pull request previews
+[context.deploy-preview]
+  command = "npm run build --filter=@project-template/frontend"
+  environment = { NEXT_PUBLIC_API_URL = "https://api.staging.com" }
+```
+
+## Multiple Sites Strategy
+
+### Option 1: Separate Netlify Sites
+
+Create two separate Netlify sites:
+
+1. **Main App** (`app.yourproject.com`)
+   - Deploy from `apps/frontend`
+   - Production URL
+
+2. **Docs** (`docs.yourproject.com`)
+   - Deploy from `apps/docs`
+   - Separate deployment
+
+### Option 2: Monorepo Subdirectories
+
+Deploy both from same repository using Netlify CLI:
+
+```bash
+# Deploy frontend
+netlify deploy --prod --dir=apps/frontend/out
+
+# Deploy docs
+netlify deploy --prod --dir=apps/docs/out
+```
+
+## Custom Domains
+
+### Setup Custom Domain
+
+1. In Netlify dashboard → **Domain settings**
+2. Add custom domain (e.g., `app.yourproject.com`)
+3. Configure DNS:
+   ```
+   Type: A Record
+   Name: app
+   Value: <Netlify's IP>
+   ```
+4. Enable HTTPS (automatic with Let's Encrypt)
+
+### Subdomain for Docs
+
+```
+Type: CNAME
+Name: docs
+Value: <your-netlify-site>.netlify.app
+```
+
+## Deployment Workflow
+
+### Automatic Deployments
+
+```mermaid
+graph LR
+    A[Push to GitHub] --> B[Netlify Webhook]
+    B --> C[Run Build Command]
+    C --> D[Deploy to CDN]
+    D --> E[Live Site]
+```
+
+### Manual Deployment
+
+Using Netlify CLI:
+
+```bash
+# Install Netlify CLI
+npm install -g netlify-cli
+
+# Login
+netlify login
+
+# Deploy production
+netlify deploy --prod
+```
+
+## Build Optimization
+
+### Turborepo Caching
+
+Netlify supports Turborepo remote caching:
+
+```bash
+# .env
+TURBO_TOKEN=<your-token>
+TURBO_TEAM=<your-team>
+```
+
+Enable in `netlify.toml`:
+
+```toml
+[build.environment]
+  TURBO_TOKEN = "${TURBO_TOKEN}"
+  TURBO_TEAM = "${TURBO_TEAM}"
+```
+
+### Build Performance
+
+- **Use Netlify Build Plugins**: Install plugins for optimization
+- **Cache node_modules**: Enabled by default
+- **Incremental builds**: Turborepo handles this
+
+## Monitoring
+
+### Build Logs
+
+View build logs in Netlify dashboard:
+
+1. Navigate to **Deploys**
+2. Click on deployment
+3. View **Deploy log**
+
+### Analytics
+
+Enable Netlify Analytics for:
+
+- Page views
+- Unique visitors
+- Top pages
+- Bandwidth usage
+
+## Rollbacks
+
+Instantly rollback to previous deployment:
+
+1. Go to **Deploys**
+2. Find stable deployment
+3. Click **"Publish deploy"**
+
+## Preview Deployments
+
+Every pull request gets a preview URL:
+
+```
+https://deploy-preview-<pr-number>--<site-name>.netlify.app
+```
+
+Configure PR comments in GitHub repo settings.
+
+## Troubleshooting
+
+### Build Fails
+
+Check:
+
+- Node version matches `netlify.toml`
+- All dependencies in `package.json`
+- Environment variables are set
+- Build command is correct
+
+### 404 Errors
+
+Ensure redirects are configured in `netlify.toml`:
+
+```toml
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+```
+
+### Environment Variables Not Working
+
+- Verify variable names match exactly
+- Check deploy context (production/staging/preview)
+- Rebuild after changing variables
+
+## Resources
+
+- [Netlify Documentation](https://docs.netlify.com/)
+- [Next.js on Netlify](https://docs.netlify.com/integrations/frameworks/next-js/)
+- [Monorepo Deployments](https://docs.netlify.com/configure-builds/monorepos/)

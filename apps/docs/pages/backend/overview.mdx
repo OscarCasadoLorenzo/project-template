@@ -1,0 +1,310 @@
+---
+title: Backend Overview
+description: Introduction to the NestJS REST API
+---
+
+# Backend Overview
+
+The backend is a **NestJS** application providing a RESTful API with TypeScript, Prisma ORM, and PostgreSQL database.
+
+## Technology Stack
+
+- **Framework**: NestJS 10.x
+- **Language**: TypeScript 5.3+
+- **Database**: PostgreSQL 14+
+- **ORM**: Prisma 5.x
+- **Authentication**: Passport.js + JWT
+- **Validation**: class-validator, class-transformer
+- **Testing**: Jest + Supertest
+
+## Architecture Pattern
+
+The backend follows **Domain-Driven Design (DDD)** principles with modular architecture:
+
+```
+apps/backend-rest/
+├── src/
+│   ├── main.ts              # Application entry point
+│   ├── app.module.ts        # Root module
+│   ├── auth/                # Authentication module
+│   │   ├── auth.controller.ts
+│   │   ├── auth.service.ts
+│   │   ├── auth.module.ts
+│   │   ├── guards/          # Auth guards
+│   │   ├── strategies/      # Passport strategies
+│   │   └── dto/             # Data transfer objects
+│   ├── users/               # Users module
+│   ├── common/              # Shared utilities
+│   │   ├── decorators/
+│   │   ├── filters/
+│   │   ├── interceptors/
+│   │   └── pipes/
+│   └── prisma/              # Prisma service
+└── prisma/
+    ├── schema.prisma        # Database schema
+    └── migrations/          # Migration files
+```
+
+## Core Concepts
+
+### Modules
+
+NestJS uses modules to organize code:
+
+```typescript
+@Module({
+  imports: [PrismaModule],
+  controllers: [UsersController],
+  providers: [UsersService],
+  exports: [UsersService],
+})
+export class UsersModule {}
+```
+
+### Controllers
+
+Handle HTTP requests and responses:
+
+```typescript
+@Controller("users")
+@UseGuards(JwtAuthGuard)
+export class UsersController {
+  constructor(private readonly usersService: UsersService) {}
+
+  @Get()
+  async findAll(@Query() query: PaginationQueryDto) {
+    return this.usersService.findAll(query);
+  }
+
+  @Get(":id")
+  async findOne(@Param("id") id: string) {
+    return this.usersService.findOne(id);
+  }
+}
+```
+
+### Services
+
+Business logic layer:
+
+```typescript
+@Injectable()
+export class UsersService {
+  constructor(private prisma: PrismaService) {}
+
+  async findAll(query: PaginationQueryDto) {
+    return this.prisma.user.findMany({
+      take: query.limit,
+      skip: query.offset,
+    });
+  }
+}
+```
+
+### DTOs (Data Transfer Objects)
+
+Type-safe request/response validation:
+
+```typescript
+export class CreateUserDto {
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  @MinLength(8)
+  password: string;
+
+  @IsString()
+  name: string;
+
+  @IsEnum(UserRole)
+  @IsOptional()
+  role?: UserRole;
+}
+```
+
+## Database Layer
+
+### Prisma Schema
+
+```prisma
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  MODERATOR
+}
+```
+
+### Prisma Service
+
+Centralized database access:
+
+```typescript
+@Injectable()
+export class PrismaService extends PrismaClient implements OnModuleInit {
+  async onModuleInit() {
+    await this.$connect();
+  }
+
+  async onModuleDestroy() {
+    await this.$disconnect();
+  }
+}
+```
+
+## Authentication & Authorization
+
+### JWT Strategy
+
+```typescript
+@Injectable()
+export class JwtStrategy extends PassportStrategy(Strategy) {
+  constructor(private prisma: PrismaService) {
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      secretOrKey: process.env.JWT_SECRET,
+    });
+  }
+
+  async validate(payload: JwtPayload) {
+    return this.prisma.user.findUnique({
+      where: { id: payload.sub },
+    });
+  }
+}
+```
+
+### Role-Based Access Control
+
+```typescript
+@Injectable()
+export class RolesGuard implements CanActivate {
+  constructor(private reflector: Reflector) {}
+
+  canActivate(context: ExecutionContext): boolean {
+    const requiredRoles = this.reflector.get<UserRole[]>(
+      "roles",
+      context.getHandler()
+    );
+    if (!requiredRoles) return true;
+
+    const { user } = context.switchToHttp().getRequest();
+    return requiredRoles.includes(user.role);
+  }
+}
+```
+
+Usage:
+
+```typescript
+@Post()
+@Roles(UserRole.ADMIN)
+@UseGuards(JwtAuthGuard, RolesGuard)
+async create(@Body() dto: CreateUserDto) {
+  return this.usersService.create(dto);
+}
+```
+
+## API Documentation
+
+The API uses **OpenAPI/Swagger** for documentation:
+
+- **Development**: `http://localhost:3001/api`
+- **Staging**: TBD
+- **Production**: TBD
+
+## Error Handling
+
+Centralized exception handling:
+
+```typescript
+@Catch()
+export class AllExceptionsFilter implements ExceptionFilter {
+  catch(exception: unknown, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse();
+
+    if (exception instanceof HttpException) {
+      response.status(exception.getStatus()).json(exception.getResponse());
+    } else {
+      response.status(500).json({
+        statusCode: 500,
+        message: "Internal server error",
+      });
+    }
+  }
+}
+```
+
+## Validation Pipeline
+
+Global validation pipe configuration:
+
+```typescript
+app.useGlobalPipes(
+  new ValidationPipe({
+    whitelist: true, // Strip unknown properties
+    forbidNonWhitelisted: true, // Throw error on unknown properties
+    transform: true, // Auto-transform payloads
+    transformOptions: {
+      enableImplicitConversion: true,
+    },
+  })
+);
+```
+
+## Environment Configuration
+
+```typescript
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validationSchema: Joi.object({
+        DATABASE_URL: Joi.string().required(),
+        JWT_SECRET: Joi.string().required(),
+        NODE_ENV: Joi.string().valid("development", "staging", "production"),
+      }),
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+## Best Practices
+
+1. **Use DTOs for all inputs/outputs**
+2. **Validate all incoming data**
+3. **Use guards for authentication/authorization**
+4. **Handle errors consistently**
+5. **Keep services thin** - delegate complex logic to domain services
+6. **Write comprehensive tests**
+7. **Use Prisma migrations** - never modify database manually
+
+## Performance Considerations
+
+- **Database Indexing**: Index frequently queried columns
+- **Query Optimization**: Use `select` to limit returned fields
+- **Caching**: Implement Redis for frequently accessed data
+- **Pagination**: Always paginate list endpoints
+- **Connection Pooling**: Configure Prisma connection limits
+
+## Next Steps
+
+- [Modules](/backend/modules) - Detailed module structure
+- [Database & Prisma](/backend/database) - Database patterns
+- [Authentication](/backend/authentication) - Auth implementation
+- [API Design](/backend/api-design) - API conventions
+- [Testing](/backend/testing) - Testing strategies
