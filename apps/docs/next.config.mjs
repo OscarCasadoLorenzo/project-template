@@ -11,7 +11,6 @@ export default withNextra({
   images: {
     unoptimized: true,
   },
-  basePath: process.env.NODE_ENV === "production" ? "/docs" : "",
   // Ensure trailing slashes for Netlify
   trailingSlash: true,
   reactStrictMode: true,
