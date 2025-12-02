@@ -1,7 +1,7 @@
 [build]
   base = "."
-  command = "npm install && turbo build --filter=@project-template/frontend..."
-  publish = "apps/frontend/.next"
+  command = "npm install && turbo build --filter=@project-template/docs..."
+  publish = "apps/docs/.next"
 
 [build.environment]
   NODE_VERSION = "22.0.0"
