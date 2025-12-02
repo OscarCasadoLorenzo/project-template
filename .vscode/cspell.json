@@ -1,0 +1,23 @@
+{
+  "version": "0.2",
+  "words": [
+    "project-template",
+    "shadcn",
+    "Turborepo",
+    "psql",
+    "postgres",
+    "postgresql",
+    "datasource",
+    "cuid",
+    "bcat",
+    "esnext",
+    "nestjs",
+    "cmdk",
+    "vaul",
+    "nsis",
+    "upserted"
+  ],
+  "flagWords": [],
+  "dictionaries": ["typescript", "node", "npm", "en_US"],
+  "ignorePaths": ["node_modules", "dist", ".git", "*.lock", "coverage"]
+}

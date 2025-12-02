@@ -1,0 +1,21 @@
+{
+  "extends": "@project-template/config/tsconfig/nextjs.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./*"],
+      "@project-template/ui": ["../../packages/ui/dist"],
+      "@project-template/ui/*": ["../../packages/ui/dist/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "coverage",
+    "jest.config.js",
+    "jest.setup.js"
+  ]
+}

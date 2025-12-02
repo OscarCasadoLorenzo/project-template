@@ -1,0 +1,621 @@
+# Form Builder Utility
+
+A powerful, flexible, and type-safe form builder utility for React applications using React Hook Form, Zod validation, and Shadcn/ui components.
+
+## Overview
+
+The Form Builder provides a declarative way to create complex forms using JSON configuration objects. It follows React Hook Form best practices and includes automatic validation, responsive layouts, and extensive customization options.
+
+## Architecture
+
+The Form Builder follows a layered architecture separating concerns:
+
+- **Configuration Layer** (`types.ts`) - Type definitions and interfaces
+- **Schema Layer** (`schema.ts`) - Validation and helper utilities
+- **Component Layer** (`FormField.tsx`, `FormBuilder.tsx`) - React components
+- **Export Layer** (`index.ts`) - Public API
+
+## File Structure
+
+```
+form-builder/
+├── README.md           # This documentation
+├── index.ts           # Main exports and public API
+├── types.ts           # TypeScript type definitions
+├── schema.ts          # Validation schemas and helper utilities
+├── FormBuilder.tsx    # Main form component
+└── FormField.tsx      # Individual field components
+```
+
+## Core Concepts
+
+### 1. Form Configuration
+
+Forms are defined using a declarative configuration object (`FormConfig`) that describes:
+
+- Form metadata (title, description)
+- Sections with grouped fields
+- Field definitions with validation
+- Submit/cancel button configurations
+
+### 2. Field Types
+
+The Form Builder supports multiple field types:
+
+- **Text Fields**: `text`, `email`, `password`, `url`
+- **Number Fields**: `number` with min/max constraints
+- **Text Areas**: Multi-line text input
+- **Select Fields**: Single/multi-select dropdowns
+- **Checkboxes**: Boolean inputs
+- **Radio Groups**: Single choice from options
+- **Date Fields**: `date`, `datetime-local`, `time`
+- **File Fields**: File uploads
+
+### 3. Validation
+
+Two levels of validation:
+
+- **Field-level**: Individual field validation rules
+- **Schema-level**: Zod schema validation for the entire form
+
+## Quick Start
+
+### Basic Usage
+
+```tsx
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  FormBuilder,
+  createFormConfig,
+  createSection,
+  createField,
+} from '@/utils/form-builder';
+
+// 1. Define your form configuration
+const myFormConfig = createFormConfig({
+  title: 'User Registration',
+  description: 'Create a new user account',
+  sections: [
+    createSection({
+      title: 'Personal Information',
+      columns: 2,
+      fields: [
+        createField('text', {
+          name: 'firstName',
+          label: 'First Name',
+          required: true,
+          placeholder: 'Enter your first name',
+        }),
+        createField('email', {
+          name: 'email',
+          label: 'Email Address',
+          required: true,
+          placeholder: 'user@example.com',
+        }),
+      ],
+    }),
+  ],
+  submitButton: {
+    text: 'Create Account',
+  },
+});
+
+// 2. Create validation schema
+const validationSchema = createValidationSchema(myFormConfig);
+
+// 3. Set up React Hook Form
+function MyFormComponent() {
+  const form = useForm({
+    resolver: zodResolver(validationSchema),
+    defaultValues: extractDefaultValues(myFormConfig),
+  });
+
+  const handleSubmit = (data) => {
+    console.log('Form submitted:', data);
+  };
+
+  return (
+    <FormBuilder config={myFormConfig} form={form} onSubmit={handleSubmit} />
+  );
+}
+```
+
+## API Reference
+
+### Types
+
+#### `FormConfig`
+
+Main configuration object for the entire form.
+
+```tsx
+interface FormConfig {
+  title?: string; // Form title
+  description?: string; // Form description
+  sections: FormSectionConfig[]; // Form sections
+  submitButton?: ButtonConfig; // Submit button config
+  cancelButton?: ButtonConfig; // Cancel button config
+  className?: string; // Additional CSS classes
+}
+```
+
+#### `FormSectionConfig`
+
+Configuration for a form section (group of fields).
+
+```tsx
+interface FormSectionConfig {
+  title?: string; // Section title
+  description?: string; // Section description
+  className?: string; // Additional CSS classes
+  fields: FieldConfig[]; // Fields in this section
+  columns?: 1 | 2 | 3 | 4; // Responsive grid columns
+}
+```
+
+#### `FieldConfig`
+
+Base configuration for form fields (extended by specific field types).
+
+```tsx
+interface BaseFieldConfig {
+  name: string; // Field name (must be unique)
+  label: string; // Field label
+  placeholder?: string; // Placeholder text
+  description?: string; // Help text
+  required?: boolean; // Whether field is required
+  disabled?: boolean; // Whether field is disabled
+  className?: string; // Additional CSS classes
+  validation?: z.ZodType<any>; // Custom Zod validation
+  defaultValue?: any; // Default field value
+}
+```
+
+### Field-Specific Configurations
+
+#### Text Fields
+
+```tsx
+createField('text', {
+  name: 'username',
+  label: 'Username',
+  maxLength: 50,
+  minLength: 3,
+  placeholder: 'Enter username',
+});
+```
+
+#### Number Fields
+
+```tsx
+createField('number', {
+  name: 'age',
+  label: 'Age',
+  min: 18,
+  max: 120,
+  step: 1,
+});
+```
+
+#### Select Fields
+
+```tsx
+createField('select', {
+  name: 'country',
+  label: 'Country',
+  options: [
+    { value: 'us', label: 'United States' },
+    { value: 'ca', label: 'Canada' },
+    { value: 'mx', label: 'Mexico' },
+  ],
+  multiple: false, // Set to true for multi-select
+});
+```
+
+#### Radio Groups
+
+```tsx
+createField('radio', {
+  name: 'gender',
+  label: 'Gender',
+  options: [
+    { value: 'male', label: 'Male' },
+    { value: 'female', label: 'Female' },
+    { value: 'other', label: 'Other' },
+  ],
+});
+```
+
+### Utility Functions
+
+#### `createValidationSchema(config: FormConfig)`
+
+Automatically generates a Zod validation schema from form configuration.
+
+```tsx
+const schema = createValidationSchema(myFormConfig);
+```
+
+#### `extractDefaultValues(config: FormConfig)`
+
+Extracts default values from form configuration for React Hook Form.
+
+```tsx
+const defaultValues = extractDefaultValues(myFormConfig);
+```
+
+#### `createField<T>(type: T, config: FieldConfig)`
+
+Type-safe field creation helper.
+
+```tsx
+const emailField = createField('email', {
+  name: 'email',
+  label: 'Email',
+  required: true,
+});
+```
+
+#### `createSection(config: SectionConfig)`
+
+Creates a form section with proper typing.
+
+```tsx
+const personalSection = createSection({
+  title: 'Personal Information',
+  columns: 2,
+  fields: [
+    /* fields */
+  ],
+});
+```
+
+## Advanced Usage
+
+### Custom Validation
+
+You can provide custom Zod validation for any field:
+
+```tsx
+createField('text', {
+  name: 'password',
+  label: 'Password',
+  type: 'password',
+  validation: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain uppercase letter')
+    .regex(/[0-9]/, 'Password must contain a number'),
+});
+```
+
+### Dynamic Forms
+
+Forms can be built dynamically based on external data:
+
+```tsx
+function createDynamicForm(fieldDefinitions) {
+  const fields = fieldDefinitions.map((def) =>
+    createField(def.type, {
+      name: def.name,
+      label: def.label,
+      required: def.required,
+      // ... other properties
+    })
+  );
+
+  return createFormConfig({
+    title: 'Dynamic Form',
+    sections: [
+      createSection({
+        fields,
+        columns: 2,
+      }),
+    ],
+    submitButton: { text: 'Submit' },
+  });
+}
+```
+
+### Complex Form Example
+
+```tsx
+const characterFormConfig = createFormConfig({
+  title: 'Character Sheet',
+  description: 'Create or edit your character',
+  sections: [
+    createSection({
+      title: 'Basic Information',
+      columns: 2,
+      fields: [
+        createField('text', {
+          name: 'characterName',
+          label: 'Character Name',
+          required: true,
+        }),
+        createField('select', {
+          name: 'class',
+          label: 'Character Class',
+          options: [
+            { value: 'warrior', label: 'Warrior' },
+            { value: 'mage', label: 'Mage' },
+            { value: 'rogue', label: 'Rogue' },
+          ],
+          required: true,
+        }),
+      ],
+    }),
+    createSection({
+      title: 'Attributes',
+      columns: 3,
+      fields: [
+        createField('number', {
+          name: 'strength',
+          label: 'Strength',
+          min: 1,
+          max: 20,
+          defaultValue: 10,
+        }),
+        createField('number', {
+          name: 'dexterity',
+          label: 'Dexterity',
+          min: 1,
+          max: 20,
+          defaultValue: 10,
+        }),
+        createField('number', {
+          name: 'intelligence',
+          label: 'Intelligence',
+          min: 1,
+          max: 20,
+          defaultValue: 10,
+        }),
+      ],
+    }),
+    createSection({
+      title: 'Background',
+      columns: 1,
+      fields: [
+        createField('textarea', {
+          name: 'backstory',
+          label: 'Character Backstory',
+          rows: 5,
+          placeholder: 'Tell us about your character...',
+        }),
+      ],
+    }),
+  ],
+  submitButton: {
+    text: 'Save Character',
+    className: 'bg-blue-600 hover:bg-blue-700',
+  },
+  cancelButton: {
+    text: 'Cancel',
+  },
+});
+```
+
+## Extending the Form Builder
+
+### Adding New Field Types
+
+1. **Update Types** (`types.ts`):
+
+```tsx
+export interface CustomFieldConfig extends BaseFieldConfig {
+  type: 'custom-field';
+  customProperty?: string;
+}
+
+// Add to FieldConfig union
+export type FieldConfig =
+  | TextFieldConfig
+  | NumberFieldConfig
+  | CustomFieldConfig; // Add your new type
+```
+
+2. **Update Schema** (`schema.ts`):
+
+```tsx
+function createDefaultValidation(field: FieldConfig): z.ZodType<any> {
+  // ...existing code...
+
+  switch (field.type) {
+    // ...existing cases...
+    case 'custom-field':
+      schema = z.string(); // Define validation
+      break;
+  }
+}
+```
+
+3. **Add Field Component** (`FormField.tsx`):
+
+```tsx
+const CustomFieldComponent: React.FC<FieldProps> = ({
+  config,
+  form,
+  className,
+}) => {
+  const fieldConfig = config as Extract<FieldConfig, { type: 'custom-field' }>;
+  // Implementation
+};
+
+// Add to main FormField component
+export const FormField: React.FC<FieldProps<FieldValues>> = ({
+  config,
+  form,
+  className,
+}) => {
+  switch (config.type) {
+    // ...existing cases...
+    case 'custom-field':
+      return (
+        <CustomFieldComponent
+          config={config}
+          form={form}
+          className={className}
+        />
+      );
+  }
+};
+```
+
+### Custom Field Styling
+
+Fields can be styled using CSS classes:
+
+```tsx
+createField('text', {
+  name: 'highlighted',
+  label: 'Important Field',
+  className: 'border-2 border-yellow-400 bg-yellow-50',
+});
+```
+
+### Form-Level Custom Content
+
+You can inject custom content between sections:
+
+```tsx
+<FormBuilder config={myFormConfig} form={form} onSubmit={handleSubmit}>
+  <div className='my-4 p-4 bg-blue-50 rounded'>
+    <p>Custom content between form sections</p>
+  </div>
+</FormBuilder>
+```
+
+## Best Practices
+
+### 1. Form Organization
+
+- Group related fields into logical sections
+- Use descriptive field names (they become the form data keys)
+- Provide helpful labels and descriptions
+- Use appropriate field types for data types
+
+### 2. Validation Strategy
+
+- Define validation at the field level when possible
+- Use schema-level validation for complex cross-field validation
+- Provide clear, user-friendly error messages
+- Consider async validation for server-side checks
+
+### 3. Performance Optimization
+
+- Use `defaultValues` to prevent unnecessary re-renders
+- Implement field-level validation for immediate feedback
+- Consider using `mode: 'onChange'` for real-time validation
+
+### 4. Accessibility
+
+- Always provide descriptive labels
+- Use field descriptions for additional context
+- Ensure proper keyboard navigation
+- Test with screen readers
+
+### 5. Error Handling
+
+```tsx
+const handleSubmit = async (data) => {
+  try {
+    await submitData(data);
+    toast.success('Form submitted successfully!');
+  } catch (error) {
+    toast.error('Failed to submit form');
+    console.error('Form submission error:', error);
+  }
+};
+```
+
+## TypeScript Integration
+
+The Form Builder is fully typed and provides excellent TypeScript support:
+
+```tsx
+// Type-safe form data
+type MyFormData = {
+  name: string;
+  email: string;
+  age: number;
+};
+
+// Type-safe form configuration
+const formConfig = createFormConfig({
+  // ... configuration
+});
+
+// Type-safe form handling
+const form = useForm<MyFormData>({
+  resolver: zodResolver(mySchema),
+});
+
+const handleSubmit = (data: MyFormData) => {
+  // data is fully typed
+  console.log(data.name); // string
+  console.log(data.age); // number
+};
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Field not updating**: Ensure field `name` is unique and matches form data structure
+2. **Validation not working**: Check Zod schema and field validation configuration
+3. **Styling issues**: Verify CSS classes and component imports
+4. **TypeScript errors**: Ensure proper typing of form data and field configurations
+
+### Debug Mode
+
+Enable form debugging:
+
+```tsx
+const form = useForm({
+  mode: 'onChange', // See validation in real-time
+  // Add for debugging
+  defaultValues: extractDefaultValues(config),
+});
+
+// Log form state
+console.log('Form state:', form.formState);
+console.log('Form values:', form.getValues());
+console.log('Form errors:', form.formState.errors);
+```
+
+## Migration Guide
+
+### From Manual Forms
+
+1. Extract field definitions from JSX
+2. Create field configurations using `createField`
+3. Group fields into sections using `createSection`
+4. Replace manual validation with Zod schemas
+5. Update submit handlers to use form data directly
+
+### Version Updates
+
+When updating the Form Builder:
+
+1. Check for breaking changes in field configurations
+2. Update type definitions if needed
+3. Test form validation thoroughly
+4. Verify UI component compatibility
+
+## Contributing
+
+When contributing to the Form Builder:
+
+1. **Adding Field Types**: Follow the extension pattern outlined above
+2. **Bug Fixes**: Include test cases and examples
+3. **Documentation**: Update this README for any API changes
+4. **Breaking Changes**: Increment version and provide migration guide
+
+## Examples
+
+See the `characterFormConfig.ts` file for a real-world example of a complex form configuration using the Form Builder with multiple sections, various field types, and comprehensive validation.
+
+---
+
+For more information or support, please refer to the project documentation or create an issue in the repository.
