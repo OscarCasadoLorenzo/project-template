@@ -1,0 +1,219 @@
+---
+title: Frontend Overview
+description: Introduction to the Next.js frontend application
+---
+
+# Frontend Overview
+
+The frontend application is built with **Next.js 14**, leveraging the App Router for modern React development with server components, streaming, and optimized performance.
+
+## Technology Stack
+
+- **Framework**: Next.js 14.0.0
+- **Language**: TypeScript 5.3+
+- **Styling**: Tailwind CSS 3.x
+- **UI Components**: shadcn/ui (via `@project-template/ui`)
+- **State Management**: React Context + TanStack Query (React Query)
+- **Form Handling**: React Hook Form + Zod validation
+- **Authentication**: JWT with HTTP-only cookies
+- **API Client**: Axios with interceptors
+
+## Key Features
+
+### Server Components by Default
+
+The app leverages React Server Components for:
+
+- **Better Performance**: Less JavaScript sent to client
+- **Direct Data Fetching**: Fetch data directly in components
+- **Improved SEO**: Server-rendered content
+- **Streaming**: Progressive rendering with Suspense
+
+### App Router
+
+Using the new App Router (`app/` directory) provides:
+
+- **File-based Routing**: Automatic route creation
+- **Layouts**: Shared UI between routes
+- **Loading States**: Built-in loading.tsx files
+- **Error Handling**: Error boundaries with error.tsx
+- **Parallel Routes**: Multiple views simultaneously
+
+### Type-Safe API Communication
+
+```typescript
+// lib/api.ts
+import axios from "axios";
+
+const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  withCredentials: true,
+});
+
+export const getUsers = async () => {
+  const { data } = await api.get<User[]>("/users");
+  return data;
+};
+```
+
+### Authentication Flow
+
+```typescript
+// contexts/AuthContext.tsx
+'use client';
+
+export function AuthProvider({ children }: { children: React.Node }) {
+  const [user, setUser] = useState<User | null>(null);
+
+  // Auto-refresh token logic
+  // Protected route handling
+  // Login/logout methods
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+```
+
+## Directory Structure
+
+```
+apps/frontend/
+├── app/                    # App Router pages
+│   ├── layout.tsx         # Root layout
+│   ├── page.tsx           # Home page
+│   ├── providers.tsx      # Client-side providers
+│   ├── admin/             # Admin dashboard
+│   ├── login/             # Auth pages
+│   └── register/
+├── components/            # Reusable components
+│   ├── ProtectedRoute.tsx
+│   ├── LoadingSpinner.tsx
+│   └── Sidebar.tsx
+├── contexts/              # React contexts
+│   └── AuthContext.tsx
+├── hooks/                 # Custom hooks
+│   ├── useUsers.ts
+│   └── useRoleAccess.ts
+├── lib/                   # Utilities
+│   ├── api.ts             # API client
+│   └── pagination.ts      # Pagination helpers
+├── types/                 # TypeScript types
+│   └── index.ts
+└── utils/                 # Helper functions
+    └── form-builder/      # Dynamic form generation
+```
+
+## Core Concepts
+
+### Server vs Client Components
+
+**Server Components** (default):
+
+- Fetch data directly
+- Access backend resources
+- No client-side interactivity
+
+```tsx
+// app/users/page.tsx
+async function UsersPage() {
+  const users = await getUsers(); // Direct data fetch
+
+  return <UserList users={users} />;
+}
+```
+
+**Client Components** (with 'use client'):
+
+- Interactive UI
+- Event handlers
+- React hooks
+
+```tsx
+"use client";
+
+export function UserForm() {
+  const [name, setName] = useState("");
+
+  return <input value={name} onChange={(e) => setName(e.target.value)} />;
+}
+```
+
+### Routing Conventions
+
+- **`page.tsx`**: Route UI
+- **`layout.tsx`**: Shared layout
+- **`loading.tsx`**: Loading state
+- **`error.tsx`**: Error boundary
+- **`not-found.tsx`**: 404 page
+
+### Data Fetching
+
+**Server-side**:
+
+```tsx
+async function getData() {
+  const res = await fetch("https://api.example.com/data");
+  return res.json();
+}
+```
+
+**Client-side with React Query**:
+
+```tsx
+"use client";
+
+function Users() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["users"],
+    queryFn: getUsers,
+  });
+}
+```
+
+## Styling Approach
+
+### Tailwind CSS
+
+Utility-first CSS with custom configuration:
+
+```tsx
+<div className="flex items-center gap-4 rounded-lg bg-white p-4 shadow-md dark:bg-gray-800">
+  <Avatar src={user.avatar} />
+  <div className="flex-1">
+    <h3 className="font-semibold">{user.name}</h3>
+    <p className="text-sm text-gray-500">{user.email}</p>
+  </div>
+</div>
+```
+
+### Component Library
+
+shadcn/ui components imported from `@project-template/ui`:
+
+```tsx
+import { Button, Dialog, Input } from "@project-template/ui";
+
+<Button variant="primary" size="lg">
+  Click me
+</Button>;
+```
+
+## Best Practices
+
+1. **Use Server Components by default**
+2. **Keep client components small** - only mark interactive parts as 'use client'
+3. **Colocate data fetching** - fetch data where it's needed
+4. **Use TypeScript strictly** - no `any` types
+5. **Follow naming conventions** - see [Development Conventions](/development/conventions)
+6. **Write tests** - component and integration tests
+
+## Next Steps
+
+- [Project Structure](/frontend/structure) - Detailed file organization
+- [Routing & Navigation](/frontend/routing) - App Router patterns
+- [Authentication](/frontend/authentication) - Auth implementation
+- [Components](/frontend/components) - Component guidelines
+- [Testing](/frontend/testing) - Testing strategies

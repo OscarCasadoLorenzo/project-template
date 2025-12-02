@@ -1,0 +1,217 @@
+---
+title: AI Guidelines Overview
+description: Using AI coding assistants effectively in this project
+---
+
+# AI Coding Guidelines
+
+This project includes comprehensive guidelines for AI coding assistants (like GitHub Copilot, Cursor, etc.) to ensure consistent, high-quality code generation that follows project standards.
+
+## Overview
+
+The `.ai/` directory contains structured guidance for AI agents:
+
+```
+.ai/
+├── context/           # Project background and domain knowledge
+├── prompts/           # Automated workflows
+└── rules/             # Coding standards and best practices
+```
+
+## Why AI Guidelines?
+
+AI coding assistants can significantly boost productivity, but they work best when given:
+
+1. **Clear Context** - Understanding of the project structure and goals
+2. **Explicit Rules** - Coding standards to follow
+3. **Automated Workflows** - Repeatable tasks like commit generation
+
+By maintaining these guidelines, we ensure:
+
+- ✅ **Consistent Code Quality** - AI follows the same standards as human developers
+- ✅ **Faster Onboarding** - New AI agents understand the project quickly
+- ✅ **Reduced Errors** - Explicit rules prevent common mistakes
+- ✅ **Better Collaboration** - Shared understanding across team and AI
+
+## Structure
+
+### Context Files (`.ai/context/`)
+
+Provide high-level project information:
+
+- **`project.md`** - Project overview, goals, and architecture summary
+
+These files help AI understand:
+
+- What the project does
+- Why certain decisions were made
+- How components interact
+
+### Prompt Files (`.ai/prompts/`)
+
+Define automated workflows:
+
+- **`commit-changes.md`** - Autonomous Git commit workflow using Conventional Commits
+
+These enable AI to:
+
+- Detect changes automatically
+- Group related modifications
+- Generate meaningful commit messages
+- Follow GitFlow conventions
+
+### Rules Files (`.ai/rules/`)
+
+Establish coding standards:
+
+- **`architecture.md`** - Monorepo structure, module organization
+- **`security.md`** - Security best practices
+- **`style.md`** - Code style conventions
+- **`testing.md`** - Testing requirements
+- **`frontend.md`** - Frontend-specific guidelines
+- **`backend.md`** - Backend-specific guidelines
+
+These ensure AI:
+
+- Follows TypeScript strict mode
+- Uses established patterns
+- Applies security practices
+- Maintains code style consistency
+- Includes proper tests
+
+## Rule Priority
+
+When conflicts arise, follow this priority order:
+
+1. **Explicit user instructions** (highest priority)
+2. **Security rules** - Never compromise security
+3. **Architecture rules** - Maintain structural integrity
+4. **Testing rules** - Ensure code quality
+5. **Style rules** - Maintain consistency
+
+**Always consult the user** if uncertainty arises.
+
+## Integration with IDEs
+
+### GitHub Copilot
+
+Add to `.copilot/copilot_instructions.md`:
+
+```markdown
+# GitHub Copilot Instructions
+
+All AI assistance must follow guidelines in `AGENTS.md` and `.ai/` folder.
+```
+
+### Cursor
+
+Configure in `.cursorrules` or settings to reference `.ai/` directory.
+
+### Other AI Assistants
+
+Point the AI to:
+
+1. Read `AGENTS.md` for centralized reference
+2. Follow rules in `.ai/rules/`
+3. Use context from `.ai/context/`
+4. Execute workflows from `.ai/prompts/`
+
+## Example: Using Commit Automation
+
+The commit prompt (`prompts/commit-changes.md`) automates Git workflow:
+
+```bash
+# AI analyzes changes
+> Detected 3 groups of changes
+
+# AI generates commits
+> Created commits:
+> 1) feat: add user authentication
+> 2) fix: resolve login validation bug
+> 3) docs: update API documentation
+
+> All changes committed successfully
+```
+
+Each commit includes:
+
+- Conventional Commits format
+- GitFlow branch prefix (e.g., `SPM-5`)
+- Detailed description of changes
+- Context explaining why
+
+## Best Practices
+
+### For Developers
+
+1. **Keep guidelines updated** - When project standards change, update `.ai/rules/`
+2. **Reference specific rules** - When asking AI for help, mention relevant rule files
+3. **Review AI output** - Always verify generated code follows guidelines
+4. **Provide feedback** - If AI makes mistakes, update guidelines to prevent recurrence
+
+### For AI Agents
+
+1. **Read all files in `.ai/`** before starting work
+2. **Reference specific rules** when making decisions
+3. **Cite rule files** when explaining choices
+4. **Ask for clarification** when rules conflict
+
+## Conflict Resolution
+
+When conflicts occur between:
+
+- **Different rule files**: Ask user which takes precedence
+- **Rules and new requirements**: Present both options for user guidance
+- **AI interpretation and user intent**: Always defer to explicit user instructions
+
+## Maintenance
+
+To update AI configuration:
+
+1. ✅ Modify relevant file in `.ai/context/`, `.ai/prompts/`, or `.ai/rules/`
+2. ✅ Update `AGENTS.md` if summary changes
+3. ✅ Communicate changes to development team
+4. ✅ Ensure AI agents re-read configurations
+
+## Examples
+
+### Security Rule Example
+
+From `.ai/rules/security.md`:
+
+````markdown
+## Input Validation
+
+MUST: All user inputs must be validated using class-validator decorators
+
+```typescript
+export class CreateUserDto {
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  @MinLength(8)
+  password: string;
+}
+```
+````
+
+````
+
+### Style Rule Example
+
+From `.ai/rules/style.md`:
+
+```markdown
+## Naming Conventions
+
+- Use PascalCase for components: `UserProfile.tsx`
+- Use camelCase for functions: `getUserData()`
+- Use UPPER_SNAKE_CASE for constants: `API_BASE_URL`
+````
+
+## Next Steps
+
+- [Context Files](/ai-guidelines/context-files) - Detailed project context
+- [Coding Rules](/ai-guidelines/rules) - All coding standards
+- [Automation Prompts](/ai-guidelines/prompts) - Automated workflows

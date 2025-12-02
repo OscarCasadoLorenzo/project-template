@@ -1,0 +1,172 @@
+---
+title: Architecture Overview
+description: Understanding the monorepo structure and design decisions
+---
+
+# Architecture Overview
+
+Project Template is built as a monorepo using **Turborepo**, enabling efficient code sharing, consistent tooling, and optimized builds across multiple applications and packages.
+
+## Monorepo Structure
+
+```
+project-template/
+├── apps/
+│   ├── frontend/          # Next.js application
+│   ├── backend-rest/      # NestJS REST API
+│   └── docs/              # Nextra documentation site
+├── packages/
+│   ├── ui/                # Shared React components
+│   └── config/            # Shared configurations
+│       ├── eslint/        # ESLint configs
+│       └── tsconfig/      # TypeScript configs
+├── .ai/                   # AI coding assistant guidelines
+│   ├── context/           # Project context
+│   ├── prompts/           # Automation prompts
+│   └── rules/             # Coding standards
+└── turbo.json             # Turborepo configuration
+```
+
+## Design Principles
+
+### 1. Separation of Concerns
+
+Each application and package has a single, well-defined responsibility:
+
+- **Frontend**: User interface and client-side logic
+- **Backend**: Business logic, data access, and API endpoints
+- **Packages**: Reusable code shared across apps
+
+### 2. Type Safety
+
+- **TypeScript** is used throughout the entire stack
+- Shared types ensure consistency between frontend and backend
+- Prisma generates type-safe database clients
+
+### 3. Code Reusability
+
+- UI components are shared via `@project-template/ui`
+- Configuration is centralized in `@project-template/config`
+- Utilities and helpers can be extracted to shared packages
+
+### 4. Developer Experience
+
+- **Fast feedback loops** with Turborepo caching
+- **Hot module replacement** in development
+- **Consistent tooling** across all packages
+- **Automated workflows** for common tasks
+
+## Technology Stack
+
+### Frontend (`apps/frontend`)
+
+- **Framework**: Next.js 14 with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **UI Components**: shadcn/ui via `@project-template/ui`
+- **State Management**: React Context + React Query
+- **Authentication**: JWT-based auth
+
+### Backend (`apps/backend-rest`)
+
+- **Framework**: NestJS
+- **Language**: TypeScript
+- **Database**: PostgreSQL
+- **ORM**: Prisma
+- **Authentication**: Passport.js with JWT
+- **Validation**: class-validator, class-transformer
+
+### Shared Packages
+
+- **`@project-template/ui`**: React component library
+- **`@project-template/config`**: Shared configurations
+
+## Build System
+
+### Turborepo Configuration
+
+The monorepo uses Turborepo for:
+
+- **Incremental builds**: Only rebuild what changed
+- **Remote caching**: Share build artifacts across team
+- **Task dependencies**: Ensure correct build order
+- **Parallel execution**: Run tasks concurrently
+
+Key tasks defined in `turbo.json`:
+
+```json
+{
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "dist/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {},
+    "test": {
+      "outputs": ["coverage/**"]
+    }
+  }
+}
+```
+
+## Data Flow
+
+```mermaid
+graph LR
+    A[User Browser] --> B[Next.js Frontend]
+    B --> C[NestJS Backend]
+    C --> D[PostgreSQL]
+    B -.uses.-> E[@project-template/ui]
+    C -.uses.-> F[Prisma ORM]
+```
+
+1. User interacts with the **Next.js frontend**
+2. Frontend makes API calls to **NestJS backend**
+3. Backend validates requests and queries **PostgreSQL** via **Prisma**
+4. Data flows back through the same path
+
+## Deployment Architecture
+
+- **Frontend**: Deployed to Netlify as a static site
+- **Backend**: Deployed to Render/Railway as a containerized app
+- **Database**: Managed PostgreSQL on Render/Supabase
+- **Documentation**: Deployed alongside frontend on Netlify
+
+See [Deployment Guide](/deployment/netlify) for details.
+
+## Security Considerations
+
+- **Environment Variables**: Sensitive data never committed to Git
+- **JWT Authentication**: Secure token-based auth
+- **CORS Configuration**: Restricted origins in production
+- **Input Validation**: All API inputs validated and sanitized
+- **SQL Injection Protection**: Prisma parameterizes queries
+
+See [Backend Security](/backend/security) for detailed guidelines.
+
+## Performance Optimizations
+
+- **Incremental Static Regeneration**: For Next.js pages
+- **API Response Caching**: Redis/in-memory caching
+- **Database Indexing**: Optimized Prisma schema
+- **Code Splitting**: Automatic in Next.js
+- **Image Optimization**: Next.js Image component
+
+## Scalability
+
+The architecture supports horizontal scaling:
+
+- **Frontend**: CDN distribution via Netlify
+- **Backend**: Multiple instances behind load balancer
+- **Database**: Read replicas for scaling reads
+- **Caching**: Redis cluster for distributed caching
+
+## Next Steps
+
+- Explore [Frontend Architecture](/frontend/overview)
+- Learn about [Backend Modules](/backend/modules)
+- Understand [Shared Packages](/packages/ui)

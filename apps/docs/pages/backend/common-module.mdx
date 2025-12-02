@@ -1,0 +1,132 @@
+# Common Module
+
+The Common Module provides shared utilities, DTOs, and services used across the backend application.
+
+## Features
+
+### Pagination System
+
+A comprehensive pagination utility for implementing data pagination, filtering, sorting, and field selection.
+
+**Key Components:**
+
+- **PaginationService**: Core service for parsing queries and building Prisma options
+- **PaginationQueryDto**: Request DTO with validation for query parameters
+- **PaginatedResponseDto**: Standardized response format with metadata
+- **@Paginate()**: Custom decorator for easy parameter extraction
+
+**Quick Example:**
+
+```typescript
+@Get()
+async findAll(@Query() query: PaginationQueryDto) {
+  const options = this.paginationService.parsePaginationQuery(query);
+  const [data, total] = await Promise.all([
+    this.prisma.model.findMany(options),
+    this.prisma.model.count(),
+  ]);
+  return createPaginatedResponse(data, total, options.limit, options.offset);
+}
+```
+
+**Documentation:** See the [Pagination Guide](/backend/pagination-guide) for complete usage details.
+
+## Structure
+
+```
+common/
+├── decorators/
+│   └── paginate.decorator.ts       # Custom @Paginate() decorator
+├── dto/
+│   ├── pagination-query.dto.ts     # Request DTO for pagination params
+│   └── paginated-response.dto.ts   # Response DTO with metadata
+├── interfaces/
+│   └── pagination-options.interface.ts  # TypeScript interfaces
+├── services/
+│   ├── pagination.service.ts       # Core pagination logic
+│   └── pagination.service.spec.ts  # Unit tests
+├── common.module.ts                # Module definition (Global)
+└── index.ts                        # Public exports
+```
+
+## Installation
+
+The `CommonModule` is registered as a global module in `app.module.ts`, so all services are automatically available throughout the application.
+
+## Usage
+
+### Import in Your Module
+
+```typescript
+import { Module } from "@nestjs/common";
+import { CommonModule } from "../common";
+
+@Module({
+  imports: [CommonModule], // Not needed if using @Global()
+})
+export class YourModule {}
+```
+
+### Import in Your Service
+
+```typescript
+import { Injectable } from "@nestjs/common";
+import {
+  PaginationService,
+  PaginationQueryDto,
+  createPaginatedResponse,
+} from "../common";
+
+@Injectable()
+export class YourService {
+  constructor(private paginationService: PaginationService) {}
+}
+```
+
+## API Reference
+
+### PaginationService
+
+#### parsePaginationQuery(query: PaginationQueryDto)
+
+Parses and validates pagination query parameters.
+
+**Returns:** `PaginationOptions`
+
+#### buildPrismaOptions(options, config?)
+
+Builds Prisma query options from pagination options.
+
+**Parameters:**
+
+- `options`: PaginationOptions
+- `config.allowedFields`: Array of field names that can be selected
+- `config.allowedSortFields`: Array of field names that can be sorted
+- `config.defaultSort`: Default sort configuration
+
+**Returns:** Prisma query options object
+
+#### buildSearchFilter(search, fields)
+
+Builds a search filter for case-insensitive contains queries.
+
+**Parameters:**
+
+- `search`: Search string
+- `fields`: Array of field names to search
+
+**Returns:** Prisma where clause
+
+### Helper Functions
+
+#### createPaginatedResponse(data, total, limit, offset)
+
+Creates a standardized paginated response with metadata.
+
+**Returns:** `PaginatedResponseDto`
+
+## Next Steps
+
+- [Pagination Quick Reference](/backend/pagination-quick-ref) - Fast reference card
+- [Pagination Guide](/backend/pagination-guide) - Complete implementation guide
+- [Pagination Architecture](/backend/pagination-architecture) - System design details

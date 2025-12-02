@@ -1,0 +1,345 @@
+---
+title: Development Conventions
+description: Coding standards and conventions for the project
+---
+
+# Development Conventions
+
+This document outlines the coding standards, naming conventions, and best practices for the Project Template monorepo.
+
+## Code Style
+
+### TypeScript
+
+- **Strict mode enabled**: All TypeScript strict flags are on
+- **No `any` types**: Use proper types or `unknown`
+- **Explicit return types**: For all exported functions
+- **Const assertions**: Use `as const` for literal types
+
+```typescript
+// ✅ Good
+export function getUser(id: string): Promise<User> {
+  return api.get<User>(`/users/${id}`);
+}
+
+// ❌ Bad
+export function getUser(id: any) {
+  return api.get(`/users/${id}`);
+}
+```
+
+### Naming Conventions
+
+| Type               | Convention       | Example                           |
+| ------------------ | ---------------- | --------------------------------- |
+| Files (Components) | PascalCase       | `UserProfile.tsx`                 |
+| Files (utilities)  | kebab-case       | `api-client.ts`                   |
+| Components         | PascalCase       | `function UserCard()`             |
+| Functions          | camelCase        | `function getUserData()`          |
+| Variables          | camelCase        | `const userData`                  |
+| Constants          | UPPER_SNAKE_CASE | `const API_BASE_URL`              |
+| Types/Interfaces   | PascalCase       | `interface User`, `type UserRole` |
+| Enums              | PascalCase       | `enum UserStatus`                 |
+
+### File Organization
+
+```typescript
+// 1. Imports - external first, then internal
+import { useState } from "react";
+import { Button } from "@project-template/ui";
+import { getUserData } from "./utils";
+
+// 2. Types/Interfaces
+interface Props {
+  userId: string;
+}
+
+// 3. Constants
+const MAX_RETRIES = 3;
+
+// 4. Component/Function
+export function UserProfile({ userId }: Props) {
+  // Implementation
+}
+
+// 5. Exports
+export type { Props };
+```
+
+## React Conventions
+
+### Component Structure
+
+```tsx
+"use client"; // If client component
+
+import { useState } from "react";
+import { Button } from "@project-template/ui";
+
+interface UserCardProps {
+  user: User;
+  onEdit?: (user: User) => void;
+}
+
+export function UserCard({ user, onEdit }: UserCardProps) {
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleEdit = () => {
+    setIsEditing(true);
+    onEdit?.(user);
+  };
+
+  return (
+    <div className="rounded-lg border p-4">
+      <h3 className="text-lg font-semibold">{user.name}</h3>
+      <Button onClick={handleEdit}>Edit</Button>
+    </div>
+  );
+}
+```
+
+### Hooks
+
+- **Prefix with `use`**: `useUserData`, `useAuth`
+- **Custom hooks in `/hooks`**: One file per hook
+- **Return object or array**: Be consistent
+
+```typescript
+// ✅ Good
+export function useUserData(userId: string) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Logic here
+
+  return { user, loading, refetch };
+}
+
+// ✅ Also good
+export function useCounter(initial = 0) {
+  const [count, setCount] = useState(initial);
+  const increment = () => setCount((c) => c + 1);
+  const decrement = () => setCount((c) => c - 1);
+
+  return [count, { increment, decrement }] as const;
+}
+```
+
+## NestJS Conventions
+
+### Module Structure
+
+```typescript
+import { Module } from "@nestjs/common";
+import { UsersController } from "./users.controller";
+import { UsersService } from "./users.service";
+import { PrismaModule } from "../prisma/prisma.module";
+
+@Module({
+  imports: [PrismaModule],
+  controllers: [UsersController],
+  providers: [UsersService],
+  exports: [UsersService],
+})
+export class UsersModule {}
+```
+
+### Controller
+
+```typescript
+import { Controller, Get, Post, Body, Param, UseGuards } from "@nestjs/common";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { Roles } from "../auth/decorators/roles.decorator";
+import { UserRole } from "@prisma/client";
+
+@Controller("users")
+@UseGuards(JwtAuthGuard)
+export class UsersController {
+  constructor(private readonly usersService: UsersService) {}
+
+  @Get()
+  async findAll(
+    @Query() query: PaginationQueryDto
+  ): Promise<PaginatedResponse<User>> {
+    return this.usersService.findAll(query);
+  }
+
+  @Post()
+  @Roles(UserRole.ADMIN)
+  async create(@Body() dto: CreateUserDto): Promise<User> {
+    return this.usersService.create(dto);
+  }
+}
+```
+
+### Service
+
+```typescript
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+
+@Injectable()
+export class UsersService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async findOne(id: string): Promise<User> {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    return user;
+  }
+}
+```
+
+## Git Conventions
+
+### Branch Naming
+
+Follow GitFlow naming:
+
+```
+feature/SPM-123-user-authentication
+bugfix/SPM-456-login-error
+hotfix/SPM-789-security-patch
+release/1.0.0
+```
+
+### Commit Messages
+
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+**Types**:
+
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation
+- `style`: Code style (formatting, missing semi-colons, etc)
+- `refactor`: Code refactoring
+- `perf`: Performance improvement
+- `test`: Adding tests
+- `chore`: Maintenance tasks
+
+**Examples**:
+
+```
+feat(auth): add password reset functionality
+
+Implement password reset flow with email verification.
+Users can now request password reset via email.
+
+Closes #123
+```
+
+```
+fix(api): resolve user pagination bug
+
+Fixed issue where pagination offset was incorrectly calculated
+for users endpoint.
+```
+
+## Testing Conventions
+
+### File Naming
+
+- Unit tests: `component.test.tsx` or `service.spec.ts`
+- Integration tests: `feature.integration.spec.ts`
+- E2E tests: `flow.e2e.spec.ts`
+
+### Test Structure
+
+```typescript
+describe("UserService", () => {
+  let service: UserService;
+  let prisma: PrismaService;
+
+  beforeEach(async () => {
+    // Setup
+  });
+
+  afterEach(() => {
+    // Cleanup
+  });
+
+  describe("findOne", () => {
+    it("should return user when found", async () => {
+      // Arrange
+      const mockUser = { id: "1", name: "Test User" };
+      jest.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
+
+      // Act
+      const result = await service.findOne("1");
+
+      // Assert
+      expect(result).toEqual(mockUser);
+    });
+
+    it("should throw NotFoundException when user not found", async () => {
+      // Arrange
+      jest.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(service.findOne("999")).rejects.toThrow(NotFoundException);
+    });
+  });
+});
+```
+
+## Documentation Conventions
+
+### JSDoc Comments
+
+```typescript
+/**
+ * Fetches user data from the API
+ * @param userId - The unique identifier of the user
+ * @returns Promise resolving to user data
+ * @throws {NotFoundException} When user is not found
+ */
+export async function getUserData(userId: string): Promise<User> {
+  // Implementation
+}
+```
+
+### README Files
+
+Each app/package should have a README with:
+
+1. Overview
+2. Installation
+3. Usage
+4. Configuration
+5. Scripts
+6. Testing
+
+## Code Review Checklist
+
+Before submitting PR, ensure:
+
+- [ ] Code follows style guidelines
+- [ ] All tests pass
+- [ ] No ESLint errors or warnings
+- [ ] TypeScript compiles without errors
+- [ ] Documentation updated if needed
+- [ ] Commit messages follow conventions
+- [ ] No sensitive data in code
+- [ ] Environment variables documented
+
+## Resources
+
+- [TypeScript Style Guide](https://google.github.io/styleguide/tsguide.html)
+- [React Best Practices](https://react.dev/learn)
+- [NestJS Best Practices](https://docs.nestjs.com/)
+- [Conventional Commits](https://www.conventionalcommits.org/)

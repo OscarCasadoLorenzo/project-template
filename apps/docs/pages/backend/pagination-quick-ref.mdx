@@ -1,0 +1,202 @@
+# Pagination Quick Reference
+
+## 🚀 Quick Start
+
+### 1. Controller Setup
+
+```typescript
+import { Controller, Get, Query } from '@nestjs/common';
+import { PaginationQueryDto } from '../common';
+
+@Get()
+@ApiQuery({ type: PaginationQueryDto, required: false })
+findAll(@Query() query?: PaginationQueryDto) {
+  return this.service.findAll(query);
+}
+```
+
+### 2. Service Setup
+
+```typescript
+import {
+  PaginationService,
+  PaginationQueryDto,
+  createPaginatedResponse,
+} from '../common';
+
+constructor(
+  private prisma: PrismaService,
+  private paginationService: PaginationService,
+) {}
+
+async findAll(query?: PaginationQueryDto) {
+  const options = this.paginationService.parsePaginationQuery(query);
+
+  const prismaOptions = this.paginationService.buildPrismaOptions(options, {
+    allowedFields: ['id', 'name'],
+    allowedSortFields: ['name', 'createdAt'],
+    defaultSort: [{ field: 'createdAt', order: 'desc' }],
+  });
+
+  const [data, total] = await Promise.all([
+    this.prisma.model.findMany(prismaOptions),
+    this.prisma.model.count(),
+  ]);
+
+  return createPaginatedResponse(data, total, options.limit, options.offset);
+}
+```
+
+## 📝 API Usage
+
+```bash
+# Pagination
+GET /api?limit=25&offset=0
+
+# Sorting (- for descending)
+GET /api?sort=-createdAt,name
+
+# Field selection
+GET /api?fields=id,name,email
+
+# Search
+GET /api?search=warrior
+
+# Combined
+GET /api?search=elf&sort=-level&limit=10&fields=id,name
+```
+
+## 🎯 Key Methods
+
+| Method                      | Purpose                         |
+| --------------------------- | ------------------------------- |
+| `parsePaginationQuery()`    | Parse and validate query params |
+| `buildPrismaOptions()`      | Build Prisma query options      |
+| `validateFields()`          | Validate requested fields       |
+| `buildSearchFilter()`       | Build search WHERE clause       |
+| `mergeWhereConditions()`    | Combine multiple WHERE clauses  |
+| `createPaginatedResponse()` | Format paginated response       |
+
+## 🔒 Security Checklist
+
+- ✅ Define `allowedFields` array
+- ✅ Define `allowedSortFields` array
+- ✅ Never expose password/secret fields
+- ✅ Maximum limit enforced automatically (100)
+- ✅ Input validated with class-validator
+
+## 📊 Response Format
+
+```json
+{
+  "data": [...],
+  "meta": {
+    "total": 150,
+    "count": 25,
+    "limit": 25,
+    "offset": 0,
+    "hasMore": true,
+    "currentPage": 1,
+    "totalPages": 6
+  }
+}
+```
+
+## ⚙️ Configuration Options
+
+```typescript
+buildPrismaOptions(options, {
+  allowedFields: ["id", "name"], // Selectable fields
+  allowedSortFields: ["name", "date"], // Sortable fields
+  defaultSort: [{ field: "createdAt", order: "desc" }], // Default sort
+});
+```
+
+## 🔍 Search Implementation
+
+```typescript
+const searchableFields = ["name", "description"];
+const searchFilter = this.paginationService.buildSearchFilter(
+  options.search,
+  searchableFields
+);
+
+await this.prisma.model.findMany({
+  ...prismaOptions,
+  where: searchFilter,
+});
+```
+
+## 📈 Limits
+
+- **Default limit**: 25 items
+- **Maximum limit**: 100 items
+- **Minimum limit**: 1 item
+
+## 💡 Common Patterns
+
+### With Relations
+
+```typescript
+const [data, total] = await Promise.all([
+  this.prisma.model.findMany({
+    ...prismaOptions,
+    include: prismaOptions.select ? undefined : { relation: true },
+  }),
+  this.prisma.model.count({ where }),
+]);
+```
+
+### With Custom Filters
+
+```typescript
+const customWhere = { isActive: true };
+const searchFilter = this.paginationService.buildSearchFilter(options.search, [
+  "name",
+]);
+
+const where = this.paginationService.mergeWhereConditions(
+  customWhere,
+  searchFilter
+);
+
+await this.prisma.model.findMany({
+  ...prismaOptions,
+  where,
+});
+```
+
+## 🚨 Common Errors
+
+### Invalid Fields
+
+```bash
+GET /api?fields=id,password
+# ❌ Error: Invalid fields: password
+```
+
+**Solution**: Only request fields in `allowedFields`
+
+### Exceeding Max Limit
+
+```bash
+GET /api?limit=1000
+# ❌ Error: Limit cannot exceed 100
+```
+
+**Solution**: Use limit ≤ 100
+
+### Invalid Sort Field
+
+```bash
+GET /api?sort=-password
+# ❌ Error: Invalid sort field: password
+```
+
+**Solution**: Only sort by fields in `allowedSortFields`
+
+## 📚 Related Documentation
+
+- [Full Guide](/backend/pagination-guide)
+- [Architecture](/backend/pagination-architecture)
+- [Common Module](/backend/common-module)

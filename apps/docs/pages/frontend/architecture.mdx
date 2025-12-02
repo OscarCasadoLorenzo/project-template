@@ -1,0 +1,350 @@
+# Frontend Architecture
+
+## Overview
+
+The frontend is built with Next.js 14+ using the App Router, following modern React best practices with a clear separation of concerns.
+
+## Directory Structure
+
+```
+apps/frontend/
+├── app/                    # Next.js App Router pages and layouts
+│   ├── layout.tsx         # Root layout
+│   ├── page.tsx           # Home page
+│   └── [feature]/         # Feature-specific pages
+│       ├── components/    # Page-specific components
+│       ├── page.tsx       # Feature page
+│       └── layout.tsx     # Feature layout
+├── components/            # Shared components
+├── hooks/                # Custom hooks for business logic
+├── lib/                  # Utility functions and configurations
+├── services/            # API service layer
+├── types/               # TypeScript type definitions
+├── contexts/           # React contexts
+└── utils/             # Helper utilities
+```
+
+## Architecture Layers
+
+### 1. Data Layer (`services/`)
+
+Handles all API communication and data transformations.
+
+- API calls
+- HTTP client configuration
+- Data transformations
+- Error handling
+
+**Example:**
+
+```typescript
+// services/characterService.ts
+export const characterService = {
+  getCharacters: (params?) => apiClient.get("/characters", { params }),
+
+  getCharacter: (id: string) => apiClient.get(`/characters/${id}`),
+
+  createCharacter: (data: CreateCharacterDto) =>
+    apiClient.post("/characters", data),
+};
+```
+
+### 2. Logic Layer (`hooks/`)
+
+Contains business logic, state management, and data fetching.
+
+- Custom hooks for business logic
+- React Query integration
+- State management
+- Side effects
+
+**Example:**
+
+```typescript
+// hooks/useCharacters.ts
+export function useCharacters(params?: PaginationParams) {
+  return useQuery({
+    queryKey: ["characters", params],
+    queryFn: () => characterService.getCharacters(params),
+    select: (data) => extractData(data), // Auto-extract from paginated response
+  });
+}
+```
+
+### 3. UI Layer (`components/`)
+
+Pure presentation components focused on rendering.
+
+- UI components
+- Styling
+- Event handling
+- No direct data fetching
+
+**Example:**
+
+```typescript
+// components/CharacterList.tsx
+interface CharacterListProps {
+  characters: Character[];
+  isLoading: boolean;
+}
+
+export function CharacterList({ characters, isLoading }: CharacterListProps) {
+  if (isLoading) return <LoadingSpinner />;
+
+  return (
+    <div className="grid gap-4">
+      {characters.map((char) => (
+        <CharacterCard key={char.id} character={char} />
+      ))}
+    </div>
+  );
+}
+```
+
+## Component Types
+
+### Presentational Components
+
+Located in `components/` - focus solely on UI rendering.
+
+**Characteristics:**
+
+- Receive data via props
+- Don't contain business logic
+- Don't fetch data
+- Handle UI events and pass them up
+- Highly reusable
+
+**Example:**
+
+```typescript
+interface ButtonProps {
+  onClick: () => void;
+  label: string;
+  variant?: 'primary' | 'secondary';
+}
+
+export function Button({ onClick, label, variant = 'primary' }: ButtonProps) {
+  return (
+    <button onClick={onClick} className={cn(styles[variant])}>
+      {label}
+    </button>
+  );
+}
+```
+
+### Container Components
+
+Located in `app/[feature]/components/` - connect data to presentation.
+
+**Characteristics:**
+
+- Use hooks to fetch/manage data
+- Pass data to presentational components
+- Handle business logic coordination
+- Feature-specific
+
+**Example:**
+
+```typescript
+export function CharacterListWithData() {
+  const { data: characters, isLoading } = useCharacters();
+  const { mutate: deleteCharacter } = useDeleteCharacter();
+
+  return (
+    <CharacterList
+      characters={characters}
+      isLoading={isLoading}
+      onDelete={deleteCharacter}
+    />
+  );
+}
+```
+
+## Best Practices
+
+### 1. Component Organization
+
+```
+components/
+├── feature/                # Feature-specific components
+│   ├── ComponentName.tsx   # Main component file
+│   └── index.ts           # Export file
+└── shared/                # Shared/common components
+```
+
+### 2. Hook Organization
+
+```
+hooks/
+├── useFeatureName.ts      # Feature-specific hooks
+└── useSharedLogic.ts      # Shared business logic
+```
+
+### 3. File Naming Conventions
+
+**Components:**
+
+- PascalCase for component files: `CharacterList.tsx`
+- Suffix data-fetching containers with "WithData": `CharacterListWithData.tsx`
+
+**Hooks:**
+
+- camelCase with 'use' prefix: `useCharacters.ts`
+- Feature-specific hooks match feature name: `useCharacterHealth.ts`
+
+**Services:**
+
+- camelCase with 'Service' suffix: `characterService.ts`
+
+## Code Structure Pattern
+
+### Bad Practice ❌
+
+Component mixing data fetching and UI:
+
+```typescript
+function BadCharacterList() {
+  const [characters, setCharacters] = useState([]);
+
+  useEffect(() => {
+    fetch('/api/characters')
+      .then(res => res.json())
+      .then(setCharacters);
+  }, []);
+
+  return <div>{/* rendering */}</div>;
+}
+```
+
+### Good Practice ✅
+
+Separated concerns:
+
+```typescript
+// Hook (hooks/useCharacters.ts)
+export function useCharacters() {
+  return useQuery({
+    queryKey: ['characters'],
+    queryFn: () => characterService.getCharacters(),
+  });
+}
+
+// Container (app/characters/components/CharacterListWithData.tsx)
+export function CharacterListWithData() {
+  const { data, isLoading } = useCharacters();
+  return <CharacterList characters={data} isLoading={isLoading} />;
+}
+
+// Presentational (components/CharacterList.tsx)
+export function CharacterList({ characters, isLoading }: Props) {
+  if (isLoading) return <LoadingSpinner />;
+  return <div>{/* pure rendering */}</div>;
+}
+```
+
+## When to Create New Files
+
+### Create a new hook when:
+
+- Sharing logic between components
+- Managing complex state
+- Handling data fetching
+- Implementing business logic
+
+### Create a new component when:
+
+- UI pattern is reused
+- Complex UI section needs isolation
+- Breaking down large components
+
+### Create a new service when:
+
+- Adding new API endpoints
+- Implementing new data operations
+- Adding third-party integrations
+
+## State Management
+
+### Local State
+
+Use `useState` for component-specific state:
+
+```typescript
+const [isOpen, setIsOpen] = useState(false);
+```
+
+### Server State
+
+Use React Query through custom hooks:
+
+```typescript
+const { data, isLoading, error } = useCharacters();
+```
+
+### Global State
+
+Use React Context for app-wide state:
+
+```typescript
+// contexts/AuthContext.tsx
+export const AuthContext = createContext<AuthContextType>(null!);
+```
+
+## Performance Considerations
+
+### 1. Component Optimization
+
+- Memoize when needed with `useMemo` and `useCallback`
+- Split large components into smaller ones
+- Use `React.memo` for expensive pure components
+
+### 2. Data Fetching
+
+- Use proper caching strategies in React Query
+- Implement optimistic updates where appropriate
+- Debounce search inputs
+
+### 3. Code Splitting
+
+- Use dynamic imports for large components
+- Lazy load route components
+- Split vendor bundles appropriately
+
+## Testing Structure
+
+```
+__tests__/
+├── components/            # Component tests
+├── hooks/                # Hook tests
+└── services/            # Service tests
+```
+
+### Component Testing
+
+```typescript
+describe('CharacterList', () => {
+  it('renders characters', () => {
+    render(<CharacterList characters={mockCharacters} isLoading={false} />);
+    expect(screen.getByText('Character 1')).toBeInTheDocument();
+  });
+});
+```
+
+### Hook Testing
+
+```typescript
+describe("useCharacters", () => {
+  it("fetches characters", async () => {
+    const { result } = renderHook(() => useCharacters());
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
+});
+```
+
+## Related Documentation
+
+- [Pagination Guide](/frontend/pagination) - Frontend pagination implementation
+- [Form Builder](/frontend/form-builder) - Dynamic form generation
+- [Overview](/frontend/overview) - Frontend overview

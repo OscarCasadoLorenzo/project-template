@@ -1,0 +1,361 @@
+# Pagination Architecture
+
+## System Overview
+
+The pagination system follows a layered architecture that processes client requests through validation, transformation, and database execution stages.
+
+```mermaid
+graph TB
+    Client[Client Application] -->|HTTP Request| Controller[Controller]
+    Controller -->|PaginationQueryDto| Service[Service Layer]
+    Service -->|parsePaginationQuery| PaginationService[PaginationService]
+    PaginationService -->|PaginationOptions| Service
+    Service -->|buildPrismaOptions| PaginationService
+    PaginationService -->|Prisma Options| Service
+    Service -->|findMany + count| Prisma[Prisma Client]
+    Prisma -->|Query| Database[(Database)]
+    Database -->|Results| Prisma
+    Prisma -->|data + total| Service
+    Service -->|createPaginatedResponse| Response[Paginated Response]
+    Response -->|JSON| Client
+```
+
+## Data Flow
+
+### 1. Request Phase
+
+```
+Client Request:
+GET /characters?limit=10&offset=0&sort=-level&fields=id,name
+
+↓
+
+Controller receives query parameters as PaginationQueryDto
+```
+
+### 2. Parsing Phase
+
+```typescript
+// PaginationService.parsePaginationQuery()
+{
+  limit: 10,          // Validated (1-100)
+  offset: 0,          // Number
+  sort: [             // Parsed sort string
+    { field: 'level', order: 'desc' }
+  ],
+  fields: ['id', 'name'],  // Parsed CSV
+  search: undefined
+}
+```
+
+### 3. Building Phase
+
+```typescript
+// PaginationService.buildPrismaOptions()
+{
+  take: 10,                           // limit
+  skip: 0,                            // offset
+  select: {                           // Validated fields
+    id: true,
+    name: true
+  },
+  orderBy: [                          // Validated sort
+    { level: 'desc' }
+  ]
+}
+```
+
+### 4. Execution Phase
+
+```sql
+-- Database Query
+SELECT id, name FROM characters
+ORDER BY level DESC
+LIMIT 10 OFFSET 0;
+
+-- Count Query
+SELECT COUNT(*) FROM characters;
+```
+
+### 5. Response Phase
+
+```typescript
+// createPaginatedResponse()
+{
+  data: [...],        // Query results
+  meta: {
+    total: 150,       // Total count
+    count: 10,        // Items returned
+    limit: 10,        // Requested limit
+    offset: 0,        // Requested offset
+    hasMore: true,    // offset + count < total
+    currentPage: 1,   // Math.floor(offset / limit) + 1
+    totalPages: 15    // Math.ceil(total / limit)
+  }
+}
+```
+
+## Component Interactions
+
+### PaginationQueryDto
+
+**Purpose**: Validate and type incoming query parameters
+
+```typescript
+class PaginationQueryDto {
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number = 25;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  offset?: number = 0;
+
+  @IsOptional()
+  @Matches(/^[-,\w]+$/)
+  sort?: string;
+
+  @IsOptional()
+  @Matches(/^[,\w]+$/)
+  fields?: string;
+
+  @IsOptional()
+  @IsString()
+  search?: string;
+}
+```
+
+### PaginationService
+
+**Purpose**: Transform and validate query parameters into Prisma options
+
+```typescript
+class PaginationService {
+  // Parse query string into structured options
+  parsePaginationQuery(query?: PaginationQueryDto): PaginationOptions;
+
+  // Build Prisma-compatible query options with security validation
+  buildPrismaOptions(
+    options: PaginationOptions,
+    config?: {
+      allowedFields?: string[];
+      allowedSortFields?: string[];
+      defaultSort?: SortOption[];
+    }
+  ): PrismaFindOptions;
+
+  // Build search filter for case-insensitive contains
+  buildSearchFilter(search?: string, fields?: string[]): object;
+
+  // Merge multiple where conditions
+  mergeWhereConditions(...conditions: object[]): object;
+
+  // Validate fields against allowlist
+  validateFields(fields: string[], allowedFields: string[]): void;
+}
+```
+
+### Response Formatter
+
+**Purpose**: Create standardized pagination metadata
+
+```typescript
+function createPaginatedResponse<T>(
+  data: T[],
+  total: number,
+  limit: number,
+  offset: number
+): PaginatedResponseDto<T> {
+  return {
+    data,
+    meta: {
+      total,
+      count: data.length,
+      limit,
+      offset,
+      hasMore: offset + data.length < total,
+      currentPage: Math.floor(offset / limit) + 1,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
+```
+
+## Security Layers
+
+### Layer 1: Input Validation
+
+```typescript
+// Class-validator decorators ensure:
+- limit is 1-100
+- offset is ≥ 0
+- sort/fields match regex patterns
+- search is a valid string
+```
+
+### Layer 2: Field Validation
+
+```typescript
+// PaginationService.validateFields() ensures:
+- Only allowlisted fields can be selected
+- Only allowlisted fields can be sorted
+- Unknown fields throw BadRequestException
+```
+
+### Layer 3: SQL Injection Prevention
+
+```typescript
+// Prisma ORM:
+- Parameterized queries
+- No raw SQL execution
+- Type-safe field names
+```
+
+## Performance Optimizations
+
+### 1. Field Selection
+
+```typescript
+// Without field selection (full object)
+SELECT * FROM characters;  // Large payload
+
+// With field selection
+SELECT id, name FROM characters;  // Minimal payload
+```
+
+### 2. Count Optimization
+
+```typescript
+// Execute in parallel
+const [data, total] = await Promise.all([
+  this.prisma.model.findMany(options),
+  this.prisma.model.count({ where }),
+]);
+```
+
+### 3. Conditional Relations
+
+```typescript
+// Only include relations if no field selection
+include: prismaOptions.select ? undefined : { relation: true };
+```
+
+## Error Handling
+
+### Validation Errors
+
+```typescript
+// Invalid limit
+GET /api?limit=1000
+→ 400 Bad Request: "Limit cannot exceed 100"
+
+// Invalid field
+GET /api?fields=id,password
+→ 400 Bad Request: "Invalid fields: password"
+
+// Invalid sort
+GET /api?sort=-password
+→ 400 Bad Request: "Invalid sort field: password"
+```
+
+### Database Errors
+
+```typescript
+try {
+  const [data, total] = await Promise.all([...]);
+} catch (error) {
+  throw new InternalServerErrorException('Database query failed');
+}
+```
+
+## Extension Points
+
+### Custom Filters
+
+```typescript
+const customWhere = { isActive: true, userId: user.id };
+const searchFilter = this.paginationService.buildSearchFilter(options.search, [
+  "name",
+]);
+
+const where = this.paginationService.mergeWhereConditions(
+  customWhere,
+  searchFilter
+);
+```
+
+### Custom Sorting
+
+```typescript
+const prismaOptions = this.paginationService.buildPrismaOptions(options, {
+  defaultSort: [
+    { field: "isPinned", order: "desc" },
+    { field: "createdAt", order: "desc" },
+  ],
+});
+```
+
+### Custom Response
+
+```typescript
+// Add additional metadata
+const response = createPaginatedResponse(data, total, limit, offset);
+return {
+  ...response,
+  meta: {
+    ...response.meta,
+    queryTime: Date.now() - startTime,
+  },
+};
+```
+
+## Testing Strategy
+
+### Unit Tests
+
+```typescript
+describe("PaginationService", () => {
+  it("should parse query correctly", () => {
+    const result = service.parsePaginationQuery({
+      limit: 10,
+      sort: "-level,name",
+    });
+    expect(result.limit).toBe(10);
+    expect(result.sort).toEqual([
+      { field: "level", order: "desc" },
+      { field: "name", order: "asc" },
+    ]);
+  });
+
+  it("should validate fields", () => {
+    expect(() => {
+      service.validateFields(["password"], ["id", "name"]);
+    }).toThrow(BadRequestException);
+  });
+});
+```
+
+### Integration Tests
+
+```typescript
+describe("Characters (e2e)", () => {
+  it("/characters?limit=10 (GET)", () => {
+    return request(app.getHttpServer())
+      .get("/characters?limit=10")
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.meta.limit).toBe(10);
+        expect(res.body.data.length).toBeLessThanOrEqual(10);
+      });
+  });
+});
+```
+
+## Related Documentation
+
+- [Pagination Guide](/backend/pagination-guide) - Complete usage guide
+- [Quick Reference](/backend/pagination-quick-ref) - Fast reference
+- [Common Module](/backend/common-module) - Module overview
