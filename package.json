@@ -7,16 +7,16 @@
   ],
   "scripts": {
     "build": "turbo build",
-    "frontend:build": "cd apps/frontend && npm run build",
-    "backend:build": "cd apps/backend-rest && npm run build",
+    "frontend:build": "cd apps/frontend && pnpm run build",
+    "backend:build": "cd apps/backend-rest && pnpm run build",
     "dev": "turbo dev",
     "lint": "turbo lint",
     "test": "turbo test -- --passWithNoTests",
     "coverage:merge": "tsx scripts/merge-coverage.ts",
-    "coverage": "npm run test && npm run coverage:merge",
+    "coverage": "pnpm run test && pnpm run coverage:merge",
     "clean": "turbo clean",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "preinstall": "npx only-allow npm",
+    "preinstall": "npx only-allow pnpm",
     "prepare": "husky || true"
   },
   "devDependencies": {
@@ -49,8 +49,9 @@
       "prettier --write"
     ]
   },
-  "packageManager": "npm@10.9.0",
+  "packageManager": "pnpm@9.14.4",
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
   }
 }
