@@ -161,12 +161,8 @@ Value: <your-netlify-site>.netlify.app
 
 ### Automatic Deployments
 
-```mermaid
-graph LR
-    A[Push to GitHub] --> B[Netlify Webhook]
-    B --> C[Run Build Command]
-    C --> D[Deploy to CDN]
-    D --> E[Live Site]
+```
+Push to GitHub → Netlify Webhook → Run Build Command → Deploy to CDN → Live Site
 ```
 
 ### Manual Deployment
