@@ -95,7 +95,7 @@ NEXT_PUBLIC_API_URL = https://project-template-api.onrender.com
 4. **Deploy**
  - Click **"Apply"**
  - Render will automatically:
-   - Install dependencies (`npm install`)
+   - Install dependencies (`pnpm install`)
    - Generate Prisma Client
    - Run database migrations
    - Build the NestJS application
@@ -125,8 +125,8 @@ If you prefer manual setup instead of Blueprint:
    Region: Oregon
    Branch: develop
    Runtime: Node
-  Build Command: npm install && npx prisma generate --schema=apps/backend-rest/prisma/schema.prisma && npx prisma migrate deploy --schema=apps/backend-rest/prisma/schema.prisma && npx turbo build --filter=@project-template/backend-rest
-   Start Command: cd apps/backend-rest && npm run start:prod
+  Build Command: corepack enable && corepack prepare pnpm@9.14.4 --activate && pnpm install --frozen-lockfile && pnpm exec prisma generate --schema=apps/backend-rest/prisma/schema.prisma && pnpm exec prisma migrate deploy --schema=apps/backend-rest/prisma/schema.prisma && pnpm turbo build --filter=@project-template/backend-rest
+   Start Command: cd apps/backend-rest && pnpm run start:prod
    ```
 
 3. **Set Environment Variables** (see below)
@@ -137,15 +137,15 @@ The `render.yaml` configures this build pipeline:
 
 ```yaml
 buildCommand: |
-npm install &&                                    # Install all monorepo dependencies
-npx prisma generate --schema=apps/backend-rest/prisma/schema.prisma &&  # Generate Prisma Client
-npx prisma migrate deploy --schema=apps/backend-rest/prisma/schema.prisma &&  # Run migrations
-npx turbo build --filter=@project-template/backend-rest   # Build backend with Turborepo
+pnpm install --frozen-lockfile &&                 # Install all monorepo dependencies
+pnpm exec prisma generate --schema=apps/backend-rest/prisma/schema.prisma &&  # Generate Prisma Client
+pnpm exec prisma migrate deploy --schema=apps/backend-rest/prisma/schema.prisma &&  # Run migrations
+pnpm turbo build --filter=@project-template/backend-rest   # Build backend with Turborepo
 ```
 
 **Key Points:**
 
-- Uses `npx turbo build --filter` to build only the backend in monorepo
+- Uses `pnpm turbo build --filter` to build only the backend in monorepo
 - Prisma migrations run automatically before build
 - `@nestjs/cli` is in `dependencies` (not `devDependencies`) for production builds
 
@@ -170,7 +170,7 @@ The `netlify.toml` file defines:
 ```toml
 [build]
 base = "."
-command = "npm install && turbo build --filter=@project-template/frontend..."
+command = "pnpm install --frozen-lockfile && pnpm turbo build --filter=@project-template/frontend..."
 publish = "apps/frontend/.next"
 
 [build.environment]
@@ -409,7 +409,7 @@ npx prisma migrate deploy
 **Solution:** Check build command in `netlify.toml`:
 
 ```toml
-command = "npm install && turbo build --filter=@project-template/frontend..."
+command = "pnpm install --frozen-lockfile && pnpm turbo build --filter=@project-template/frontend..."
 ```
 
 The `...` suffix is critical - it builds dependencies.
