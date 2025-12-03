@@ -115,8 +115,8 @@ packages/
 
 Before you begin, ensure you have the following installed:
 
-- **Node.js** 22.0.0 or higher ([Download](https://nodejs.org/))
-- **npm** 10.9.0 or higher (comes with Node.js)
+- **Node.js** 22.11.0 or higher (LTS recommended) ([Download](https://nodejs.org/))
+- **pnpm** 9.0.0 or higher (`npm install -g pnpm` or use corepack)
 - **PostgreSQL** 12.x or higher ([Download](https://www.postgresql.org/download/))
 - **Git** ([Download](https://git-scm.com/downloads))
 
@@ -133,7 +133,7 @@ cd project-template
 
 ```bash
 # Install all workspace dependencies (root, apps, and packages)
-npm install
+pnpm install
 ```
 
 This will install dependencies for:
@@ -192,11 +192,11 @@ EOF
 
 ```bash
 # Still in apps/backend-rest/
-npx prisma generate
-npx prisma migrate deploy
+pnpm exec prisma generate
+pnpm exec prisma migrate deploy
 
 # Optional: Seed database with sample data
-npm run db:seed
+pnpm run db:seed
 ```
 
 ### 4. Configure Frontend Environment (Optional)
@@ -219,7 +219,7 @@ EOF
 From the **root directory**, run:
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 This will start:
@@ -234,7 +234,7 @@ Both services will run with hot-reload enabled.
 ```bash
 # From root
 cd apps/backend-rest
-npm run dev
+pnpm run dev
 ```
 
 The API will be available at `http://localhost:3001/api`
@@ -246,7 +246,7 @@ Swagger documentation: `http://localhost:3001/api`
 ```bash
 # From root
 cd apps/frontend
-npm run dev
+pnpm run dev
 ```
 
 The web app will be available at `http://localhost:3000`
@@ -257,7 +257,7 @@ The web app will be available at `http://localhost:3000`
 
 ```bash
 cd apps/backend-rest
-npm run db:studio
+pnpm run db:studio
 ```
 
 Opens Prisma Studio at `http://localhost:5555`
@@ -266,7 +266,7 @@ Opens Prisma Studio at `http://localhost:5555`
 
 ```bash
 cd apps/backend-rest
-npm run db:reset
+pnpm run db:reset
 ```
 
 ⚠️ **Warning**: This will delete all data!

@@ -15,13 +15,13 @@ This is the documentation site for Project Template, built with [Nextra](https:/
 
 ```bash
 # Install dependencies (from root)
-npm install
+pnpm install
 
 # Start dev server
-npm run dev --filter=@project-template/docs
+pnpm run dev --filter=@project-template/docs
 
 # Or from this directory
-npm run dev
+pnpm run dev
 ```
 
 Visit [http://localhost:3002](http://localhost:3002)
@@ -30,10 +30,10 @@ Visit [http://localhost:3002](http://localhost:3002)
 
 ```bash
 # Build for production
-npm run build --filter=@project-template/docs
+pnpm run build --filter=@project-template/docs
 
 # Or from this directory
-npm run build
+pnpm run build
 ```
 
 Output will be in the `out/` directory.
@@ -97,7 +97,7 @@ pages/
 Run markdown linting:
 
 ```bash
-npm run lint:md
+pnpm run lint:md
 ```
 
 ## Deployment
@@ -108,7 +108,7 @@ The docs are automatically deployed to Netlify when merged to main.
 
 ```bash
 # Build static export
-npm run build
+pnpm run build
 
 # Deploy to Netlify
 netlify deploy --prod --dir=out

@@ -4,6 +4,10 @@ const withNextra = nextra({
   theme: "nextra-theme-docs",
   themeConfig: "./theme.config.tsx",
   defaultShowCopyCode: true,
+  // Disable mermaid to avoid SSG issues with React hooks
+  mdxOptions: {
+    remarkPlugins: [],
+  },
 });
 
 export default withNextra({

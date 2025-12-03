@@ -115,13 +115,14 @@ Key tasks defined in `turbo.json`:
 
 ## Data Flow
 
-```mermaid
-graph LR
-    A[User Browser] --> B[Next.js Frontend]
-    B --> C[NestJS Backend]
-    C --> D[PostgreSQL]
-    B -.uses.-> E[@project-template/ui]
-    C -.uses.-> F[Prisma ORM]
+```
+User Browser
+    ↓
+Next.js Frontend (uses @project-template/ui)
+    ↓
+NestJS Backend (uses Prisma ORM)
+    ↓
+PostgreSQL Database
 ```
 
 1. User interacts with the **Next.js frontend**

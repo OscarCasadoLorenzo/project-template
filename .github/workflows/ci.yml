@@ -20,25 +20,31 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: "npm"
+          node-version: 22.11
 
-      - name: Cache node_modules
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.14.4
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
         uses: actions/cache@v4
         with:
-          path: |
-            node_modules
-            apps/*/node_modules
-            packages/*/node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-node-modules-
+            ${{ runner.os }}-pnpm-store-
 
       - name: Cache Turborepo
         uses: actions/cache@v4
         with:
           path: .turbo
-          key: ${{ runner.os }}-turbo-${{ hashFiles('**/package-lock.json', '**/tsconfig.json', 'turbo.json') }}
+          key: ${{ runner.os }}-turbo-${{ hashFiles('**/pnpm-lock.yaml', '**/tsconfig.json', 'turbo.json') }}
           restore-keys: |
             ${{ runner.os }}-turbo-
 
@@ -53,22 +59,22 @@ jobs:
             ${{ runner.os }}-prisma-
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma Client
-        run: cd apps/backend-rest && npx prisma generate
+        run: cd apps/backend-rest && pnpm exec prisma generate
 
       - name: Lint
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Build
-        run: npm run build
+        run: pnpm run build
 
       - name: Test
-        run: npm run test
+        run: pnpm run test
 
       - name: Merge Coverage Reports
-        run: npm run coverage:merge
+        run: pnpm run coverage:merge
 
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v4

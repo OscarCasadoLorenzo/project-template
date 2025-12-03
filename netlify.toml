@@ -1,10 +1,10 @@
 [build]
   base = "."
-  command = "npm install && turbo build --filter=@project-template/docs..."
+  command = "corepack enable && corepack prepare pnpm@9.14.4 --activate && pnpm install --frozen-lockfile && pnpm turbo build --filter=@project-template/docs..."
   publish = "apps/docs/.next"
 
 [build.environment]
-  NODE_VERSION = "22.0.0"
+  NODE_VERSION = "22.11.0"
   NPM_VERSION = "10.9.0"
   # Enable Turborepo remote caching (optional but recommended)
   TURBO_TOKEN = "${TURBO_TOKEN}"

@@ -4,20 +4,30 @@
 
 The pagination system follows a layered architecture that processes client requests through validation, transformation, and database execution stages.
 
-```mermaid
-graph TB
-    Client[Client Application] -->|HTTP Request| Controller[Controller]
-    Controller -->|PaginationQueryDto| Service[Service Layer]
-    Service -->|parsePaginationQuery| PaginationService[PaginationService]
-    PaginationService -->|PaginationOptions| Service
-    Service -->|buildPrismaOptions| PaginationService
-    PaginationService -->|Prisma Options| Service
-    Service -->|findMany + count| Prisma[Prisma Client]
-    Prisma -->|Query| Database[(Database)]
-    Database -->|Results| Prisma
-    Prisma -->|data + total| Service
-    Service -->|createPaginatedResponse| Response[Paginated Response]
-    Response -->|JSON| Client
+```
+Client Application
+    ↓ (HTTP Request)
+Controller
+    ↓ (PaginationQueryDto)
+Service Layer
+    ↓ (parsePaginationQuery)
+PaginationService
+    ↓ (PaginationOptions)
+Service Layer
+    ↓ (buildPrismaOptions)
+PaginationService
+    ↓ (Prisma Options)
+Service Layer
+    ↓ (findMany + count)
+Prisma Client
+    ↓ (Query)
+Database
+    ↓ (Results: data + total)
+Service Layer
+    ↓ (createPaginatedResponse)
+Paginated Response
+    ↓ (JSON)
+Client Application
 ```
 
 ## Data Flow

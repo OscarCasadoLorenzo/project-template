@@ -66,14 +66,14 @@ The project includes a `netlify.toml` configuration file:
 - **Base directory**: `/`
 - **Build command**: `npm run build --filter=@project-template/frontend`
 - **Publish directory**: `apps/frontend/out`
-- **Node version**: 18
+- **Node version**: 22.11
 
 **For Documentation Site** (separate site):
 
 - **Base directory**: `/`
 - **Build command**: `npm run build --filter=@project-template/docs`
 - **Publish directory**: `apps/docs/out`
-- **Node version**: 18
+- **Node version**: 22.11
 
 ### 3. Environment Variables
 
@@ -161,12 +161,8 @@ Value: <your-netlify-site>.netlify.app
 
 ### Automatic Deployments
 
-```mermaid
-graph LR
-    A[Push to GitHub] --> B[Netlify Webhook]
-    B --> C[Run Build Command]
-    C --> D[Deploy to CDN]
-    D --> E[Live Site]
+```
+Push to GitHub → Netlify Webhook → Run Build Command → Deploy to CDN → Live Site
 ```
 
 ### Manual Deployment
