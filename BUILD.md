@@ -174,7 +174,7 @@ command = "pnpm install --frozen-lockfile && pnpm turbo build --filter=@project-
 publish = "apps/frontend/.next"
 
 [build.environment]
-NODE_VERSION = "22.0.0"
+NODE_VERSION = "22.11.0"
 NPM_VERSION = "10.9.0"
 ```
 

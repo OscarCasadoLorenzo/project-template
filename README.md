@@ -115,7 +115,7 @@ packages/
 
 Before you begin, ensure you have the following installed:
 
-- **Node.js** 22.0.0 or higher ([Download](https://nodejs.org/))
+- **Node.js** 22.11.0 or higher (LTS recommended) ([Download](https://nodejs.org/))
 - **pnpm** 9.0.0 or higher (`npm install -g pnpm` or use corepack)
 - **PostgreSQL** 12.x or higher ([Download](https://www.postgresql.org/download/))
 - **Git** ([Download](https://git-scm.com/downloads))

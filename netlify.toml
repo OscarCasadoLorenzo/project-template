@@ -4,7 +4,7 @@
   publish = "apps/docs/.next"
 
 [build.environment]
-  NODE_VERSION = "22.0.0"
+  NODE_VERSION = "22.11.0"
   NPM_VERSION = "10.9.0"
   # Enable Turborepo remote caching (optional but recommended)
   TURBO_TOKEN = "${TURBO_TOKEN}"
