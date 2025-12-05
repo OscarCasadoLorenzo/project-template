@@ -1,32 +1,23 @@
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+import createMiddleware from "next-intl/middleware";
+import { defaultLocale, locales } from "./i18n/config";
 
-// Routes that don't require authentication
-const publicRoutes = ["/login", "/register", "/unauthorized"];
+export default createMiddleware({
+  // A list of all locales that are supported
+  locales,
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  // Used when no locale matches
+  defaultLocale,
 
-  // Allow public routes
-  if (publicRoutes.includes(pathname)) {
-    return NextResponse.next();
-  }
-
-  // For client-side rendered apps with localStorage auth,
-  // we handle protection in the AuthProvider and ProtectedRoute components
-  // In production with server-side sessions, implement token validation here
-  return NextResponse.next();
-}
+  // Always use locale prefix in the URL (even for default locale)
+  localePrefix: "always",
+});
 
 export const config = {
+  // Match only internationalized pathnames
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    // Match all pathnames except for
+    // - … if they start with `/api`, `/_next` or `/_vercel`
+    // - … the ones containing a dot (e.g. `favicon.ico`)
+    "/((?!api|_next|_vercel|.*\\..*).*)",
   ],
 };
