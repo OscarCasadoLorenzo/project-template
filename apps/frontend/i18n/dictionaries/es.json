@@ -1,0 +1,55 @@
+{
+  "common": {
+    "welcome": "Bienvenido",
+    "logout": "Cerrar sesión",
+    "login": "Iniciar sesión",
+    "register": "Registrarse",
+    "goToHome": "Ir al inicio",
+    "or": "O"
+  },
+  "navigation": {
+    "home": "Inicio",
+    "admin": "Administrador",
+    "settings": "Configuración"
+  },
+  "auth": {
+    "loginTitle": "Inicia sesión en tu cuenta",
+    "registerTitle": "Crear nueva cuenta",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "fullName": "Nombre completo",
+    "signingIn": "Iniciando sesión...",
+    "creatingAccount": "Creando cuenta...",
+    "createAccount": "Crear cuenta",
+    "signInToExistingAccount": "inicia sesión en tu cuenta existente",
+    "passwordRequirements": "Requisitos de contraseña:",
+    "atLeast8Characters": "Al menos 8 caracteres",
+    "oneUppercaseLetter": "Una letra mayúscula",
+    "oneLowercaseLetter": "Una letra minúscula",
+    "oneNumber": "Un número",
+    "oneSpecialCharacter": "Un carácter especial (@$!%*?&#, etc.)",
+    "passwordsDoNotMatch": "Las contraseñas no coinciden",
+    "passwordsMatch": "Las contraseñas coinciden",
+    "passwordStrength": "Fortaleza de la contraseña:"
+  },
+  "errors": {
+    "accessDenied": "Acceso denegado",
+    "unauthorized": "No tienes permiso para acceder a esta página.",
+    "unauthorizedWithRole": "Tu rol ({role}) no tiene permiso para acceder a esta página."
+  },
+  "admin": {
+    "title": "Gestión de usuarios",
+    "description": "Gestionar roles y permisos de usuarios",
+    "userList": "Lista de usuarios",
+    "email": "Correo electrónico",
+    "name": "Nombre",
+    "role": "Rol",
+    "createdAt": "Creado",
+    "actions": "Acciones",
+    "changeRole": "Cambiar rol",
+    "noUsers": "No se encontraron usuarios",
+    "page": "Página",
+    "of": "de"
+  }
+}
