@@ -1,7 +1,8 @@
 "use client";
 
 import { useAuth, UserRole } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation";
+import { defaultLocale, locales } from "@/i18n/config";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 interface ProtectedRouteProps {
@@ -13,20 +14,32 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({
   children,
   allowedRoles,
-  redirectTo = "/login",
+  redirectTo,
 }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Get current locale from pathname
+  const getCurrentLocale = () => {
+    const pathSegments = pathname?.split("/").filter(Boolean) || [];
+    return locales.includes(pathSegments[0] as any)
+      ? pathSegments[0]
+      : defaultLocale;
+  };
 
   useEffect(() => {
     if (!isLoading) {
+      const locale = getCurrentLocale();
+      const defaultRedirect = redirectTo || `/${locale}/login`;
+
       if (!user) {
-        router.push(redirectTo);
+        router.push(defaultRedirect);
       } else if (allowedRoles && !allowedRoles.includes(user.role)) {
-        router.push("/unauthorized");
+        router.push(`/${locale}/unauthorized`);
       }
     }
-  }, [user, isLoading, allowedRoles, redirectTo, router]);
+  }, [user, isLoading, allowedRoles, redirectTo, router, pathname]);
 
   if (isLoading) {
     return (
