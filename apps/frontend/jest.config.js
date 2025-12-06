@@ -15,6 +15,24 @@ const customJestConfig = {
     "^@project-template/ui$": "<rootDir>/../../packages/ui/src",
   },
   testEnvironment: "jest-environment-jsdom",
+  transform: {
+    "^.+\\.(t|j)sx?$": [
+      "@swc/jest",
+      {
+        jsc: {
+          parser: {
+            syntax: "typescript",
+            tsx: true,
+          },
+          transform: {
+            react: {
+              runtime: "automatic",
+            },
+          },
+        },
+      },
+    ],
+  },
   collectCoverage: true,
   coverageReporters: ["json", "lcov", "text", "html"],
   coverageDirectory: "coverage",
@@ -35,7 +53,7 @@ const customJestConfig = {
   ],
   testMatch: ["**/?(*.)+(spec|test).[jt]s?(x)"],
   transformIgnorePatterns: [
-    "/node_modules/",
+    "/node_modules/(?!(next-intl|@formatjs|use-intl)/)",
     "^.+\\.module\\.(css|sass|scss)$",
   ],
 };

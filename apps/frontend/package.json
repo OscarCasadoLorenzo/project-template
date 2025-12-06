@@ -32,6 +32,8 @@
   },
   "devDependencies": {
     "@project-template/config": "workspace:*",
+    "@swc/core": "^1.15.3",
+    "@swc/jest": "^0.2.39",
     "@testing-library/jest-dom": "^6.1.5",
     "@testing-library/react": "^14.1.2",
     "@testing-library/user-event": "^14.5.1",
