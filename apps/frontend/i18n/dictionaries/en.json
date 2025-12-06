@@ -1,0 +1,55 @@
+{
+  "common": {
+    "welcome": "Welcome",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register",
+    "goToHome": "Go to Home",
+    "or": "Or"
+  },
+  "navigation": {
+    "home": "Home",
+    "admin": "Admin",
+    "settings": "Settings"
+  },
+  "auth": {
+    "loginTitle": "Sign in to your account",
+    "registerTitle": "Create new account",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "fullName": "Full name",
+    "signingIn": "Signing in...",
+    "creatingAccount": "Creating account...",
+    "createAccount": "Create account",
+    "signInToExistingAccount": "sign in to your existing account",
+    "passwordRequirements": "Password Requirements:",
+    "atLeast8Characters": "At least 8 characters",
+    "oneUppercaseLetter": "One uppercase letter",
+    "oneLowercaseLetter": "One lowercase letter",
+    "oneNumber": "One number",
+    "oneSpecialCharacter": "One special character (@$!%*?&#, etc.)",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "passwordsMatch": "Passwords match",
+    "passwordStrength": "Password Strength:"
+  },
+  "errors": {
+    "accessDenied": "Access Denied",
+    "unauthorized": "You do not have permission to access this page.",
+    "unauthorizedWithRole": "Your role ({role}) does not have permission to access this page."
+  },
+  "admin": {
+    "title": "User Management",
+    "description": "Manage user roles and permissions",
+    "userList": "User List",
+    "email": "Email",
+    "name": "Name",
+    "role": "Role",
+    "createdAt": "Created",
+    "actions": "Actions",
+    "changeRole": "Change Role",
+    "noUsers": "No users found",
+    "page": "Page",
+    "of": "of"
+  }
+}

@@ -1,7 +1,8 @@
 "use client";
 
+import { defaultLocale, locales } from "@/i18n/config";
 import { fetchApi } from "@/lib/api";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   createContext,
   ReactNode,
@@ -36,6 +37,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Get current locale from pathname
+  const getCurrentLocale = () => {
+    const pathSegments = pathname?.split("/").filter(Boolean) || [];
+    return locales.includes(pathSegments[0] as any)
+      ? pathSegments[0]
+      : defaultLocale;
+  };
 
   // Load auth state from localStorage on mount
   useEffect(() => {
@@ -89,7 +99,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("auth_token", data.access_token);
       localStorage.setItem("auth_user", JSON.stringify(data.user));
 
-      router.push("/");
+      const locale = getCurrentLocale();
+      router.push(`/${locale}`);
     } catch (error) {
       console.error("Login error:", error);
       throw error;
@@ -114,7 +125,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("auth_token", data.access_token);
       localStorage.setItem("auth_user", JSON.stringify(data.user));
 
-      router.push("/");
+      const locale = getCurrentLocale();
+      router.push(`/${locale}`);
     } catch (error) {
       console.error("Registration error:", error);
       throw error;
@@ -122,11 +134,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    const locale = getCurrentLocale();
     setToken(null);
     setUser(null);
     localStorage.removeItem("auth_token");
     localStorage.removeItem("auth_user");
-    router.push("/login");
+    router.push(`/${locale}/login`);
   };
 
   const hasRole = (roles: UserRole[]): boolean => {

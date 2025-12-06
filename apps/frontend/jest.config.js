@@ -1,20 +1,38 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-const nextJest = require("next/jest");
 
-const createJestConfig = nextJest({
-  // Provide the path to your Next.js app to load next.config.js and .env files in your test environment
-  dir: "./",
-});
-
-// Add any custom config to be passed to Jest
+// Manual Jest config without loading next.config.js (which uses ESM)
 const customJestConfig = {
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
   moduleNameMapper: {
-    // Handle module aliases (this will be automatically configured for you soon)
+    // Handle CSS imports
+    "^.+\\.module\\.(css|sass|scss)$": "identity-obj-proxy",
+    "^.+\\.(css|sass|scss)$": "<rootDir>/__mocks__/styleMock.js",
+    // Handle image imports
+    "^.+\\.(jpg|jpeg|png|gif|webp|avif|svg)$":
+      "<rootDir>/__mocks__/fileMock.js",
+    // Handle module aliases
     "^@/(.*)$": "<rootDir>/$1",
     "^@project-template/ui$": "<rootDir>/../../packages/ui/src",
   },
   testEnvironment: "jest-environment-jsdom",
+  transform: {
+    "^.+\\.(t|j)sx?$": [
+      "@swc/jest",
+      {
+        jsc: {
+          parser: {
+            syntax: "typescript",
+            tsx: true,
+          },
+          transform: {
+            react: {
+              runtime: "automatic",
+            },
+          },
+        },
+      },
+    ],
+  },
   collectCoverage: true,
   coverageReporters: ["json", "lcov", "text", "html"],
   coverageDirectory: "coverage",
@@ -34,7 +52,10 @@ const customJestConfig = {
     "!**/dist/**",
   ],
   testMatch: ["**/?(*.)+(spec|test).[jt]s?(x)"],
+  transformIgnorePatterns: [
+    "/node_modules/(?!(next-intl|@formatjs|use-intl)/)",
+    "^.+\\.module\\.(css|sass|scss)$",
+  ],
 };
 
-// createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
-module.exports = createJestConfig(customJestConfig);
+module.exports = customJestConfig;

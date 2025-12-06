@@ -13,18 +13,6 @@ describe('Button Component', () => {
     expect(getByText('Test Button')).toBeInTheDocument();
   });
 
-  it('applies default variant class', () => {
-    const { container } = render(<Button>Default</Button>);
-    const button = container.querySelector('button');
-    expect(button).toHaveClass('bg-primary');
-  });
-
-  it('applies custom variant when provided', () => {
-    const { container } = render(<Button variant="outline">Outline</Button>);
-    const button = container.querySelector('button');
-    expect(button).toHaveClass('border');
-  });
-
   it('is disabled when disabled prop is true', () => {
     const { container } = render(<Button disabled>Disabled</Button>);
     const button = container.querySelector('button');

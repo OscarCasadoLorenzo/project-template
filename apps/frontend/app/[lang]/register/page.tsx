@@ -6,6 +6,7 @@ import {
   getPasswordStrengthLabel,
   validatePasswordStrength,
 } from "@/utils/password-validator";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -19,6 +20,8 @@ export default function RegisterPage() {
   const [showPasswordRequirements, setShowPasswordRequirements] =
     useState(false);
   const { register } = useAuth();
+  const t = useTranslations();
+  const locale = useLocale();
 
   const passwordStrength = validatePasswordStrength(password);
 
@@ -65,15 +68,15 @@ export default function RegisterPage() {
       <div className="w-full max-w-md space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-            Create your account
+            {t("auth.registerTitle")}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Or{" "}
+            {t("common.or")}{" "}
             <Link
-              href="/login"
+              href={`/${locale}/login`}
               className="font-medium text-blue-600 hover:text-blue-500"
             >
-              sign in to your existing account
+              {t("auth.signInToExistingAccount")}
             </Link>
           </p>
         </div>
@@ -92,7 +95,7 @@ export default function RegisterPage() {
           <div className="space-y-4 rounded-md shadow-sm">
             <div>
               <label htmlFor="name" className="sr-only">
-                Full name
+                {t("auth.fullName")}
               </label>
               <input
                 id="name"
@@ -102,13 +105,13 @@ export default function RegisterPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="relative block w-full rounded-md border-0 px-3 py-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
-                placeholder="Full name"
+                placeholder={t("auth.fullName")}
                 minLength={3}
               />
             </div>
             <div>
               <label htmlFor="email" className="sr-only">
-                Email address
+                {t("auth.email")}
               </label>
               <input
                 id="email"
@@ -119,12 +122,12 @@ export default function RegisterPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="relative block w-full rounded-md border-0 px-3 py-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
-                placeholder="Email address"
+                placeholder={t("auth.email")}
               />
             </div>
             <div>
               <label htmlFor="password" className="sr-only">
-                Password
+                {t("auth.password")}
               </label>
               <input
                 id="password"
@@ -136,14 +139,16 @@ export default function RegisterPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 onFocus={() => setShowPasswordRequirements(true)}
                 className="relative block w-full rounded-md border-0 px-3 py-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
-                placeholder="Password"
+                placeholder={t("auth.password")}
               />
               {password && (
                 <div className="mt-2 space-y-2">
                   {/* Password Strength Bar */}
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs">
-                      <span className="text-gray-600">Password Strength:</span>
+                      <span className="text-gray-600">
+                        {t("auth.passwordStrength")}
+                      </span>
                       <span
                         className={`font-medium ${
                           passwordStrength.score < 25
@@ -174,7 +179,7 @@ export default function RegisterPage() {
                   {showPasswordRequirements && (
                     <div className="rounded-md bg-gray-50 p-3 text-xs">
                       <p className="mb-2 font-medium text-gray-700">
-                        Password Requirements:
+                        {t("auth.passwordRequirements")}
                       </p>
                       <ul className="space-y-1">
                         <li
@@ -185,7 +190,7 @@ export default function RegisterPage() {
                           }
                         >
                           {passwordStrength.requirements.minLength ? "✓" : "○"}{" "}
-                          At least 8 characters
+                          {t("auth.atLeast8Characters")}
                         </li>
                         <li
                           className={
@@ -197,7 +202,7 @@ export default function RegisterPage() {
                           {passwordStrength.requirements.hasUppercase
                             ? "✓"
                             : "○"}{" "}
-                          One uppercase letter
+                          {t("auth.oneUppercaseLetter")}
                         </li>
                         <li
                           className={
@@ -209,7 +214,7 @@ export default function RegisterPage() {
                           {passwordStrength.requirements.hasLowercase
                             ? "✓"
                             : "○"}{" "}
-                          One lowercase letter
+                          {t("auth.oneLowercaseLetter")}
                         </li>
                         <li
                           className={
@@ -219,7 +224,7 @@ export default function RegisterPage() {
                           }
                         >
                           {passwordStrength.requirements.hasNumber ? "✓" : "○"}{" "}
-                          One number
+                          {t("auth.oneNumber")}
                         </li>
                         <li
                           className={
@@ -231,7 +236,7 @@ export default function RegisterPage() {
                           {passwordStrength.requirements.hasSpecialChar
                             ? "✓"
                             : "○"}{" "}
-                          One special character (@$!%*?&#, etc.)
+                          {t("auth.oneSpecialCharacter")}
                         </li>
                       </ul>
                     </div>
@@ -241,7 +246,7 @@ export default function RegisterPage() {
             </div>
             <div>
               <label htmlFor="confirm-password" className="sr-only">
-                Confirm password
+                {t("auth.confirmPassword")}
               </label>
               <input
                 id="confirm-password"
@@ -257,15 +262,17 @@ export default function RegisterPage() {
                     ? "ring-green-500"
                     : "ring-red-500")
                 } placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6`}
-                placeholder="Confirm password"
+                placeholder={t("auth.confirmPassword")}
               />
               {confirmPassword && password !== confirmPassword && (
                 <p className="mt-1 text-xs text-red-600">
-                  Passwords do not match
+                  {t("auth.passwordsDoNotMatch")}
                 </p>
               )}
               {confirmPassword && password === confirmPassword && (
-                <p className="mt-1 text-xs text-green-600">✓ Passwords match</p>
+                <p className="mt-1 text-xs text-green-600">
+                  ✓ {t("auth.passwordsMatch")}
+                </p>
               )}
             </div>
           </div>
@@ -276,7 +283,7 @@ export default function RegisterPage() {
               disabled={isLoading}
               className="group relative flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? "Creating account..." : "Create account"}
+              {isLoading ? t("auth.creatingAccount") : t("auth.createAccount")}
             </button>
           </div>
         </form>

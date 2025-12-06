@@ -10,6 +10,7 @@ import {
   Shield,
   User as UserIcon,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { RoleEditModal } from "./components/RoleEditModal";
 
@@ -40,6 +41,7 @@ export default function AdminPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user: currentUser } = useAuth();
+  const t = useTranslations();
 
   const fetchUsers = useCallback(async (page: number) => {
     try {
@@ -107,10 +109,10 @@ export default function AdminPage() {
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900">
-              User Management
+              {t("admin.title")}
             </h1>
             <p className="mt-2 text-sm text-gray-600">
-              Manage user roles and permissions across the system
+              {t("admin.description")}
             </p>
           </div>
 
@@ -125,7 +127,8 @@ export default function AdminPage() {
                   </span>
                 </div>
                 <div className="text-sm text-gray-500">
-                  Page {meta.page} of {meta.totalPages}
+                  {t("admin.page")} {meta.page} {t("admin.of")}{" "}
+                  {meta.totalPages}
                 </div>
               </div>
             </div>
@@ -142,19 +145,19 @@ export default function AdminPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                      User
+                      {t("admin.name")}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                      Email
+                      {t("admin.email")}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                      Role
+                      {t("admin.role")}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                      Joined
+                      {t("admin.createdAt")}
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                      Actions
+                      {t("admin.actions")}
                     </th>
                   </tr>
                 </thead>
