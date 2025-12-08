@@ -1,0 +1,486 @@
+# i18n Troubleshooting
+
+Common issues and solutions when working with internationalization in the frontend application.
+
+## Translation Issues
+
+### Translations Not Displaying
+
+**Symptom:** Text shows as translation keys instead of actual text (e.g., "auth.loginTitle")
+
+**Possible Causes:**
+
+1. **Missing translation key**
+
+   ```json
+   // en.json
+   {
+     "common": {
+       "welcome": "Welcome"
+       // Missing "goodbye" key
+     }
+   }
+   ```
+
+   **Solution:** Add the missing key to all locale files
+
+   ```json
+   {
+     "common": {
+       "welcome": "Welcome",
+       "goodbye": "Goodbye"
+     }
+   }
+   ```
+
+2. **Wrong namespace**
+
+   ```tsx
+   // ❌ Wrong
+   const t = useTranslations("auth");
+   return <p>{t("common.welcome")}</p>;
+
+   // ✅ Correct
+   const t = useTranslations("common");
+   return <p>{t("welcome")}</p>;
+   ```
+
+3. **Messages not loaded**
+
+   **Check layout:**
+
+   ```tsx
+   // Must pass BOTH locale and messages
+   <NextIntlClientProvider locale={lang} messages={messages}>
+   ```
+
+### Translations Not Updating After Locale Switch
+
+**Symptom:** Language switcher changes URL but content stays in same language
+
+**Solution:** Ensure `router.refresh()` is called:
+
+```tsx
+const switchLocale = (newLocale: Locale) => {
+  const newPath = `/${newLocale}${pathWithoutLocale || ""}`;
+
+  startTransition(() => {
+    router.push(newPath);
+    router.refresh(); // ← Critical!
+  });
+};
+```
+
+### Hydration Errors
+
+**Symptom:** Error: "Text content does not match server-rendered HTML"
+
+**Cause:** Client and server rendering different locales
+
+**Solution:** Ensure locale is consistent:
+
+```tsx
+// Root layout must pass locale to provider
+<NextIntlClientProvider locale={lang} messages={messages}>
+  {children}
+</NextIntlClientProvider>
+```
+
+**Also check:** `<html lang={lang}>` attribute matches
+
+## Routing Issues
+
+### 404 on Locale-Prefixed URLs
+
+**Symptom:** `/en/login` returns 404
+
+**Solution 1:** Check app directory structure:
+
+```
+apps/frontend/
+└── app/
+    └── [lang]/          ← Must have this dynamic segment
+        ├── layout.tsx
+        ├── page.tsx
+        └── login/
+            └── page.tsx
+```
+
+**Solution 2:** Verify `generateStaticParams()` in layout:
+
+```tsx
+export async function generateStaticParams() {
+  return locales.map((locale) => ({ lang: locale }));
+}
+```
+
+### Middleware Not Running
+
+**Symptom:** Non-prefixed URLs (like `/login`) don't redirect to `/en/login`
+
+**Solution:** Check middleware matcher pattern:
+
+```typescript
+export const config = {
+  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
+};
+```
+
+**Verify:** Middleware file is at root: `apps/frontend/middleware.ts`
+
+### Infinite Redirect Loop
+
+**Symptom:** Browser shows "Too many redirects" error
+
+**Cause:** Middleware and app router both trying to handle locale
+
+**Solution:** Use `localePrefix: "always"` in middleware config:
+
+```typescript
+export default createMiddleware({
+  locales,
+  defaultLocale,
+  localePrefix: "always", // ← Prevents loops
+});
+```
+
+## Configuration Issues
+
+### TypeScript Errors with Locale Type
+
+**Symptom:** Type error: "Type 'string' is not assignable to type 'Locale'"
+
+**Solution:** Use proper type assertion:
+
+```tsx
+// ❌ Wrong
+const locale: Locale = searchParams.lang;
+
+// ✅ Correct
+const locale: Locale = searchParams.lang as Locale;
+
+// ✅ Better - validate first
+const locale: Locale = locales.includes(searchParams.lang as Locale)
+  ? (searchParams.lang as Locale)
+  : defaultLocale;
+```
+
+### Module Not Found: dictionaries
+
+**Symptom:** Error: "Cannot find module './dictionaries/en.json'"
+
+**Solution:** Check file path in `i18n/request.ts`:
+
+```typescript
+// Ensure path is relative to the config file
+messages: (await import(`./dictionaries/${validLocale}.json`)).default,
+//                         ^ relative to request.ts location
+```
+
+**Verify:** Dictionary files exist at correct path:
+
+```
+apps/frontend/i18n/
+├── config.ts
+├── request.ts
+└── dictionaries/
+    ├── en.json
+    └── es.json
+```
+
+### Next.js Config Not Applied
+
+**Symptom:** i18n features not working despite correct setup
+
+**Solution:** Ensure config is wrapped with next-intl plugin:
+
+```javascript
+// next.config.js
+const withNextIntl = require("next-intl/plugin")("./i18n/request.ts");
+
+module.exports = withNextIntl({
+  // Your Next.js config
+});
+```
+
+## Performance Issues
+
+### Slow Page Loads
+
+**Symptom:** Pages take long time to load after locale switch
+
+**Possible Causes:**
+
+1. **Large dictionary files**
+
+   **Solution:** Split dictionaries by feature:
+
+   ```typescript
+   // Load only needed namespaces
+   messages: {
+     common: (await import(`./dictionaries/${locale}/common.json`)).default,
+     auth: (await import(`./dictionaries/${locale}/auth.json`)).default,
+   }
+   ```
+
+2. **Re-creating hooks in render**
+
+   ```tsx
+   // ❌ Bad - creates new hook on every render
+   return <div>{useTranslations()("title")}</div>;
+
+   // ✅ Good - create once
+   const t = useTranslations();
+   return <div>{t("title")}</div>;
+   ```
+
+### Memory Leaks
+
+**Symptom:** Browser memory usage keeps increasing
+
+**Solution:** Clean up transition in useEffect:
+
+```tsx
+import { useTransition } from "react";
+
+export default function LanguageSwitcher() {
+  const [isPending, startTransition] = useTransition();
+
+  // Transitions automatically clean up
+  // No manual cleanup needed
+}
+```
+
+## Development Issues
+
+### Hot Reload Not Working for Translations
+
+**Symptom:** Must restart dev server to see translation changes
+
+**Solution:** Next.js should auto-reload JSON files. If not:
+
+1. **Check file is saved**
+2. **Verify path is correct**
+3. **Restart dev server:** `npm run dev`
+
+**Alternative:** Use environment variable to force reload:
+
+```bash
+NEXT_FORCE_RELOAD=1 npm run dev
+```
+
+### Translation Keys Show in Production
+
+**Symptom:** Production build shows keys instead of translations
+
+**Solution:** Ensure dictionaries are included in build:
+
+```javascript
+// next.config.js
+module.exports = withNextIntl({
+  // Don't exclude JSON files
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.json$/,
+      type: "javascript/auto",
+    });
+    return config;
+  },
+});
+```
+
+## Testing Issues
+
+### Tests Fail with "useTranslations is not a function"
+
+**Symptom:** Component tests fail when using translation hooks
+
+**Solution:** Wrap component in provider:
+
+```tsx
+import { NextIntlClientProvider } from "next-intl";
+
+const messages = {
+  common: { welcome: "Welcome" },
+};
+
+test("renders component", () => {
+  render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <MyComponent />
+    </NextIntlClientProvider>
+  );
+});
+```
+
+### Mock Translation Hook
+
+For unit tests that don't need real translations:
+
+```tsx
+jest.mock("next-intl", () => ({
+  useTranslations: () => (key: string) => key,
+  useLocale: () => "en",
+}));
+```
+
+## Browser Issues
+
+### Wrong Language Detected
+
+**Symptom:** Application shows unexpected language on first visit
+
+**Cause:** Browser's `Accept-Language` header
+
+**Solution 1:** Override with query parameter during development:
+
+```typescript
+// middleware.ts
+export default createMiddleware({
+  locales,
+  defaultLocale,
+  localeDetection: process.env.NODE_ENV === "development" ? false : true,
+});
+```
+
+**Solution 2:** Let users manually select language (already implemented via LanguageSwitcher)
+
+### Locale Not Persisting
+
+**Symptom:** Language resets after page refresh
+
+**Cause:** URL-based locale is stateless
+
+**Solution:** Store preference in localStorage or cookies:
+
+```tsx
+// On locale switch
+const switchLocale = (newLocale: Locale) => {
+  localStorage.setItem("preferredLocale", newLocale);
+  // ... rest of implementation
+};
+
+// In middleware, check stored preference
+```
+
+## Error Messages
+
+### "Locale is not configured"
+
+**Full Error:** `Error: The locale "fr" is not configured.`
+
+**Solution:** Add locale to configuration:
+
+```typescript
+// i18n/config.ts
+export const locales = ["en", "es", "fr"] as const;
+```
+
+### "Messages are not provided"
+
+**Full Error:** `Error: Messages are not provided in NextIntlClientProvider`
+
+**Solution:** Pass messages prop:
+
+```tsx
+<NextIntlClientProvider locale={lang} messages={messages}>
+```
+
+### "Cannot read properties of undefined (reading 'common')"
+
+**Cause:** Dictionary structure doesn't match usage
+
+**Solution:** Check dictionary structure matches component code:
+
+```tsx
+// Component expects: t('common.welcome')
+// Dictionary must have:
+{
+  "common": {
+    "welcome": "Welcome"
+  }
+}
+```
+
+## Debugging Tips
+
+### Enable Debug Mode
+
+```typescript
+// i18n/request.ts
+export default getRequestConfig(async ({ locale }) => {
+  const messages = (await import(`./dictionaries/${locale}.json`)).default;
+
+  if (process.env.NODE_ENV === "development") {
+    console.log("Loading locale:", locale);
+    console.log("Available keys:", Object.keys(messages));
+  }
+
+  return { locale, messages };
+});
+```
+
+### Check Current Locale
+
+```tsx
+import { useLocale } from "next-intl";
+
+export default function DebugLocale() {
+  const locale = useLocale();
+
+  if (process.env.NODE_ENV === "development") {
+    return (
+      <div className="fixed bottom-4 right-4 bg-yellow-100 p-2 rounded">
+        Current locale: {locale}
+      </div>
+    );
+  }
+
+  return null;
+}
+```
+
+### Validate Dictionary Structure
+
+```typescript
+// scripts/validate-i18n.ts
+import en from "../apps/frontend/i18n/dictionaries/en.json";
+import es from "../apps/frontend/i18n/dictionaries/es.json";
+
+function getKeys(obj: any, prefix = ""): string[] {
+  return Object.keys(obj).flatMap((key) => {
+    const newKey = prefix ? `${prefix}.${key}` : key;
+    return typeof obj[key] === "object" ? getKeys(obj[key], newKey) : [newKey];
+  });
+}
+
+const enKeys = getKeys(en).sort();
+const esKeys = getKeys(es).sort();
+
+const missing = enKeys.filter((key) => !esKeys.includes(key));
+const extra = esKeys.filter((key) => !enKeys.includes(key));
+
+if (missing.length) {
+  console.error("Missing in Spanish:", missing);
+}
+if (extra.length) {
+  console.error("Extra in Spanish:", extra);
+}
+```
+
+## Getting Help
+
+If you're still experiencing issues:
+
+1. **Check documentation:** Review [Configuration](/frontend/i18n/configuration) and [Usage Guide](/frontend/i18n/usage)
+2. **Check console:** Look for errors in browser console
+3. **Check network tab:** Verify correct locale files are loaded
+4. **Review examples:** Compare with working implementation in the codebase
+5. **Ask for help:** Provide specific error messages and code snippets
+
+## Related Resources
+
+- [next-intl Troubleshooting](https://next-intl.dev/docs/troubleshooting)
+- [Next.js i18n Docs](https://nextjs.org/docs/app/guides/internationalization)
+- [Best Practices](/frontend/i18n/best-practices)
+- [Configuration](/frontend/i18n/configuration)

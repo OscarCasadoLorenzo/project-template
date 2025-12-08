@@ -1,0 +1,333 @@
+# i18n Configuration
+
+This guide covers the complete setup and configuration of internationalization in the frontend application.
+
+## Installation
+
+First, install the required dependency:
+
+```bash
+npm install next-intl
+```
+
+## Core Configuration Files
+
+### 1. Locale Configuration (`i18n/config.ts`)
+
+This file defines all supported locales and their properties:
+
+```typescript
+export const locales = ["en", "es"] as const;
+export type Locale = (typeof locales)[number];
+
+export const defaultLocale: Locale = "en";
+
+export const localeNames: Record<Locale, string> = {
+  en: "English",
+  es: "Español",
+};
+```
+
+**Key Components:**
+
+- **`locales`** - Array of supported locale codes (readonly for type safety)
+- **`Locale`** - TypeScript type derived from locales array
+- **`defaultLocale`** - Fallback locale when detection fails
+- **`localeNames`** - Display names for each locale (used in language switcher)
+
+### 2. Request Configuration (`i18n/request.ts`)
+
+Server-side configuration for loading messages:
+
+```typescript
+import { getRequestConfig } from "next-intl/server";
+import type { Locale } from "./config";
+import { defaultLocale, locales } from "./config";
+
+export default getRequestConfig(async ({ locale }) => {
+  // Validate that the incoming `locale` parameter is valid
+  const validLocale: Locale = locales.includes(locale as Locale)
+    ? (locale as Locale)
+    : defaultLocale;
+
+  return {
+    locale: validLocale,
+    messages: (await import(`./dictionaries/${validLocale}.json`)).default,
+  };
+});
+```
+
+**Features:**
+
+- Validates incoming locale against supported locales
+- Falls back to default locale if invalid
+- Dynamically imports appropriate dictionary file
+- Runs on server for each request
+
+### 3. Middleware Configuration (`middleware.ts`)
+
+Handles locale detection and routing:
+
+```typescript
+import createMiddleware from "next-intl/middleware";
+import { defaultLocale, locales } from "./i18n/config";
+
+export default createMiddleware({
+  // A list of all locales that are supported
+  locales,
+
+  // Used when no locale matches
+  defaultLocale,
+
+  // Always use locale prefix in the URL (even for default locale)
+  localePrefix: "always",
+});
+
+export const config = {
+  // Match only internationalized pathnames
+  matcher: [
+    // Match all pathnames except for
+    // - … if they start with `/api`, `/_next` or `/_vercel`
+    // - … the ones containing a dot (e.g. `favicon.ico`)
+    "/((?!api|_next|_vercel|.*\\..*).*)",
+  ],
+};
+```
+
+**Configuration Options:**
+
+- **`locales`** - List of supported locales
+- **`defaultLocale`** - Fallback locale
+- **`localePrefix: "always"`** - Always include locale in URL (even for default)
+- **`matcher`** - Routes to apply middleware to (excludes API routes, static files)
+
+### 4. Next.js Configuration (`next.config.js`)
+
+Wrap Next.js config with next-intl plugin:
+
+```javascript
+const withNextIntl = require("next-intl/plugin")("./i18n/request.ts");
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  // Your existing Next.js configuration
+};
+
+module.exports = withNextIntl(nextConfig);
+```
+
+## Translation Dictionaries
+
+### File Structure
+
+```
+i18n/
+└── dictionaries/
+    ├── en.json
+    └── es.json
+```
+
+### Dictionary Format
+
+Organize translations by domain for better maintainability:
+
+```json
+{
+  "common": {
+    "welcome": "Welcome",
+    "logout": "Logout",
+    "login": "Login"
+  },
+  "navigation": {
+    "home": "Home",
+    "admin": "Admin",
+    "settings": "Settings"
+  },
+  "auth": {
+    "loginTitle": "Sign in to your account",
+    "email": "Email",
+    "password": "Password"
+  },
+  "errors": {
+    "accessDenied": "Access Denied",
+    "unauthorized": "You do not have permission to access this page."
+  },
+  "admin": {
+    "title": "User Management",
+    "description": "Manage user roles and permissions"
+  }
+}
+```
+
+**Organization Best Practices:**
+
+- Group by feature/domain (auth, admin, common)
+- Use nested objects for related terms
+- Keep keys descriptive but concise
+- Mirror structure across all language files
+
+### Example Spanish Dictionary (`es.json`)
+
+```json
+{
+  "common": {
+    "welcome": "Bienvenido",
+    "logout": "Cerrar sesión",
+    "login": "Iniciar sesión"
+  },
+  "navigation": {
+    "home": "Inicio",
+    "admin": "Administración",
+    "settings": "Configuración"
+  },
+  "auth": {
+    "loginTitle": "Inicia sesión en tu cuenta",
+    "email": "Correo electrónico",
+    "password": "Contraseña"
+  }
+}
+```
+
+## App Router Integration
+
+### Root Layout (`app/[lang]/layout.tsx`)
+
+The root layout must accept the locale parameter and provide translations:
+
+```tsx
+import { Locale, locales } from "@/i18n/config";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
+
+export async function generateStaticParams() {
+  return locales.map((locale) => ({ lang: locale }));
+}
+
+export default async function RootLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: Promise<{ lang: Locale }>;
+}) {
+  const { lang } = await params;
+  const messages = await getMessages({ locale: lang });
+
+  return (
+    <html lang={lang}>
+      <body>
+        <NextIntlClientProvider locale={lang} messages={messages}>
+          {children}
+        </NextIntlClientProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+**Critical Points:**
+
+1. **`generateStaticParams()`** - Generates static paths for all locales
+2. **`getMessages({ locale: lang })`** - Loads translations for current locale
+3. **`NextIntlClientProvider`** - Provides translations to all components
+4. **Both `locale` and `messages` props** - Required for proper hydration
+
+## Adding New Locales
+
+To add a new language (e.g., French):
+
+### Step 1: Update Configuration
+
+```typescript
+// i18n/config.ts
+export const locales = ["en", "es", "fr"] as const;
+
+export const localeNames: Record<Locale, string> = {
+  en: "English",
+  es: "Español",
+  fr: "Français",
+};
+```
+
+### Step 2: Create Dictionary
+
+Create `i18n/dictionaries/fr.json` with all translation keys:
+
+```json
+{
+  "common": {
+    "welcome": "Bienvenue",
+    "logout": "Se déconnecter"
+  }
+  // ... all other keys
+}
+```
+
+### Step 3: No Code Changes Needed
+
+The middleware and routing automatically handle the new locale!
+
+## Environment-Specific Configuration
+
+For different environments, you can use environment variables:
+
+```typescript
+// i18n/config.ts
+export const locales = process.env.NEXT_PUBLIC_AVAILABLE_LOCALES?.split(
+  ","
+) || ["en", "es"];
+
+export const defaultLocale = process.env.NEXT_PUBLIC_DEFAULT_LOCALE || "en";
+```
+
+Then in `.env`:
+
+```bash
+NEXT_PUBLIC_AVAILABLE_LOCALES=en,es,fr
+NEXT_PUBLIC_DEFAULT_LOCALE=en
+```
+
+## TypeScript Support
+
+The configuration provides full type safety:
+
+```typescript
+// Locale type is automatically derived
+const locale: Locale = "en"; // ✅ Valid
+const invalid: Locale = "jp"; // ❌ Type error
+
+// Type-safe locale names
+const name = localeNames["en"]; // ✅ "English"
+const bad = localeNames["invalid"]; // ❌ Type error
+```
+
+## Configuration Validation
+
+Always validate configuration on startup:
+
+```typescript
+// i18n/validation.ts
+import { locales, localeNames, defaultLocale } from "./config";
+
+export function validateI18nConfig() {
+  // Check all locales have display names
+  for (const locale of locales) {
+    if (!localeNames[locale]) {
+      throw new Error(`Missing display name for locale: ${locale}`);
+    }
+  }
+
+  // Check default locale is in supported locales
+  if (!locales.includes(defaultLocale)) {
+    throw new Error(
+      `Default locale ${defaultLocale} is not in supported locales`
+    );
+  }
+}
+```
+
+## Next Steps
+
+- [Usage Guide](/frontend/i18n/usage) - Learn how to use translations in components
+- [Language Switcher](/frontend/i18n/language-switcher) - Implement language switching
+- [Best Practices](/frontend/i18n/best-practices) - Follow recommended patterns

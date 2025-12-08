@@ -1,0 +1,623 @@
+# i18n Best Practices
+
+Follow these guidelines to maintain a scalable, maintainable, and performant internationalization implementation.
+
+## Translation Key Organization
+
+### Use Hierarchical Structure
+
+Organize keys by feature/domain, not by page:
+
+✅ **Good:**
+
+```json
+{
+  "auth": {
+    "loginTitle": "Sign in",
+    "registerTitle": "Create account",
+    "email": "Email",
+    "password": "Password"
+  },
+  "admin": {
+    "userManagement": "User Management",
+    "addUser": "Add User"
+  },
+  "errors": {
+    "notFound": "Not found",
+    "unauthorized": "Access denied"
+  }
+}
+```
+
+❌ **Bad:**
+
+```json
+{
+  "loginPageTitle": "Sign in",
+  "loginPageEmail": "Email",
+  "registerPageTitle": "Create account",
+  "adminPageTitle": "User Management"
+}
+```
+
+### Naming Conventions
+
+1. **Use camelCase** for key names
+2. **Be descriptive** but concise
+3. **Group related terms** under common namespaces
+4. **Avoid abbreviations** unless universally understood
+
+```json
+{
+  "user": {
+    "firstName": "First Name", // ✅ Clear
+    "lastName": "Last Name", // ✅ Clear
+    "fn": "First Name", // ❌ Unclear abbreviation
+    "userFirstNameField": "First Name" // ❌ Too verbose
+  }
+}
+```
+
+### Reuse Common Terms
+
+Create a `common` namespace for shared vocabulary:
+
+```json
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No"
+  }
+}
+```
+
+Use in components:
+
+```tsx
+const t = useTranslations('common');
+
+<button>{t('save')}</button>
+<button>{t('cancel')}</button>
+```
+
+## Component Patterns
+
+### Scope Translations to Namespace
+
+Instead of using root translations everywhere:
+
+✅ **Good:**
+
+```tsx
+export default function LoginForm() {
+  const t = useTranslations("auth");
+
+  return (
+    <form>
+      <h2>{t("loginTitle")}</h2>
+      <input placeholder={t("email")} />
+      <input placeholder={t("password")} />
+    </form>
+  );
+}
+```
+
+❌ **Bad:**
+
+```tsx
+export default function LoginForm() {
+  const t = useTranslations();
+
+  return (
+    <form>
+      <h2>{t("auth.loginTitle")}</h2>
+      <input placeholder={t("auth.email")} />
+      <input placeholder={t("auth.password")} />
+    </form>
+  );
+}
+```
+
+### Declare Hook Once Per Component
+
+✅ **Good:**
+
+```tsx
+export default function MyComponent() {
+  const t = useTranslations("feature");
+
+  return (
+    <div>
+      <h1>{t("title")}</h1>
+      <p>{t("description")}</p>
+      <button>{t("action")}</button>
+    </div>
+  );
+}
+```
+
+❌ **Bad:**
+
+```tsx
+export default function MyComponent() {
+  return (
+    <div>
+      <h1>{useTranslations("feature")("title")}</h1>
+      <p>{useTranslations("feature")("description")}</p>
+      <button>{useTranslations("feature")("action")}</button>
+    </div>
+  );
+}
+```
+
+### Extract Translation Logic
+
+For complex translation logic, create helper functions:
+
+```tsx
+function useAuthMessages() {
+  const t = useTranslations("auth");
+
+  return {
+    getPasswordError: (error: string) => {
+      switch (error) {
+        case "too_short":
+          return t("passwordTooShort");
+        case "no_uppercase":
+          return t("passwordNoUppercase");
+        case "no_number":
+          return t("passwordNoNumber");
+        default:
+          return t("passwordInvalid");
+      }
+    },
+    getLoginError: (status: number) => {
+      if (status === 401) return t("invalidCredentials");
+      if (status === 429) return t("tooManyAttempts");
+      return t("loginFailed");
+    },
+  };
+}
+
+// Usage
+export default function LoginForm() {
+  const { getLoginError } = useAuthMessages();
+
+  // ... handle login
+  if (error) {
+    setErrorMessage(getLoginError(response.status));
+  }
+}
+```
+
+## Translation Content
+
+### Keep Text Natural
+
+Write translations as natural sentences, not code:
+
+✅ **Good:**
+
+```json
+{
+  "welcome": "Welcome to our application",
+  "itemCount": "You have {count} items"
+}
+```
+
+❌ **Bad:**
+
+```json
+{
+  "welcome": "Welcome_to_our_application",
+  "itemCount": "item_count: {count}"
+}
+```
+
+### Provide Context for Translators
+
+Add comments in English dictionary for ambiguous terms:
+
+```json
+{
+  "save": "Save",
+  "// save_context": "Button label for saving form data",
+
+  "close": "Close",
+  "// close_context": "Button to close a modal dialog",
+
+  "record": "Record",
+  "// record_context": "Noun - a database record, not the verb"
+}
+```
+
+### Handle Pluralization Properly
+
+Use ICU message syntax for complex plurals:
+
+```json
+{
+  "items": {
+    "zero": "No items",
+    "one": "One item",
+    "other": "{count} items"
+  }
+}
+```
+
+### Gender and Formality
+
+Consider language-specific requirements:
+
+**Spanish:**
+
+```json
+{
+  "welcome": {
+    "formal": "Bienvenido/a",
+    "informal": "¡Hola!"
+  }
+}
+```
+
+## File Management
+
+### Keep Dictionaries in Sync
+
+Ensure all language files have the same structure:
+
+```bash
+# Script to check dictionary parity
+#!/bin/bash
+for lang in es fr de; do
+  diff <(jq -S 'keys' dictionaries/en.json) \
+       <(jq -S 'keys' dictionaries/$lang.json)
+done
+```
+
+### Split Large Dictionaries
+
+For large applications, split dictionaries by feature:
+
+```
+dictionaries/
+├── en/
+│   ├── common.json
+│   ├── auth.json
+│   ├── admin.json
+│   └── index.ts
+└── es/
+    ├── common.json
+    ├── auth.json
+    ├── admin.json
+    └── index.ts
+```
+
+**`index.ts`:**
+
+```typescript
+import common from "./common.json";
+import auth from "./auth.json";
+import admin from "./admin.json";
+
+export default {
+  common,
+  auth,
+  admin,
+};
+```
+
+### Version Control
+
+1. **Commit all languages together** to maintain parity
+2. **Use meaningful commit messages**: "i18n: Add French translations for auth module"
+3. **Review translations** before merging
+4. **Track missing translations** with TODO comments
+
+## Performance Optimization
+
+### Lazy Load Translations
+
+For very large applications:
+
+```typescript
+export default getRequestConfig(async ({ locale }) => {
+  return {
+    locale,
+    messages: {
+      common: (await import(`./dictionaries/${locale}/common.json`)).default,
+      // Load feature-specific translations on demand
+    },
+  };
+});
+```
+
+### Cache Formatted Values
+
+When rendering lists:
+
+```tsx
+import { useMemo } from "react";
+import { useFormatter } from "next-intl";
+
+export default function PriceList({ items }) {
+  const format = useFormatter();
+
+  const formattedPrices = useMemo(
+    () =>
+      items.map((item) =>
+        format.number(item.price, {
+          style: "currency",
+          currency: "USD",
+        })
+      ),
+    [items, format]
+  );
+
+  return (
+    <ul>
+      {formattedPrices.map((price, i) => (
+        <li key={i}>{price}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+### Avoid Over-Translation
+
+Not everything needs translation:
+
+```tsx
+// ✅ Translate UI labels
+<button>{t('common.save')}</button>
+
+// ❌ Don't translate user-generated content
+<p>{userBio}</p>
+
+// ❌ Don't translate technical identifiers
+<code>{errorCode}</code>
+
+// ✅ DO translate error messages
+<p>{t(`errors.${errorCode}`)}</p>
+```
+
+## Accessibility
+
+### Provide `lang` Attribute
+
+Ensure screen readers use correct pronunciation:
+
+```tsx
+<html lang={locale}>
+```
+
+### Translate ARIA Labels
+
+```tsx
+const t = useTranslations("a11y");
+
+<button aria-label={t("closeDialog")}>
+  <X />
+</button>;
+```
+
+### Use Semantic HTML with Translations
+
+```tsx
+const t = useTranslations();
+
+<h1>{t('pageTitle')}</h1>  {/* Not <div class="title"> */}
+<p>{t('description')}</p>  {/* Not <span> */}
+```
+
+## SEO Best Practices
+
+### Localized Metadata
+
+```tsx
+export async function generateMetadata({ params }) {
+  const { lang } = await params;
+  const t = await getTranslations({ locale: lang });
+
+  return {
+    title: t("meta.title"),
+    description: t("meta.description"),
+    openGraph: {
+      title: t("meta.ogTitle"),
+      description: t("meta.ogDescription"),
+      locale: lang,
+    },
+  };
+}
+```
+
+### Implement `hreflang` (Future Enhancement)
+
+```tsx
+<Head>
+  <link rel="alternate" hrefLang="en" href="https://example.com/en/page" />
+  <link rel="alternate" hrefLang="es" href="https://example.com/es/page" />
+</Head>
+```
+
+### Use Locale-Specific URLs
+
+✅ Good: `/en/products/laptop`  
+✅ Good: `/es/productos/laptop`
+
+❌ Bad: `/products/laptop?lang=en`
+
+## Testing
+
+### Test All Locales
+
+```tsx
+describe("LoginForm", () => {
+  it.each(["en", "es"])("renders correctly in %s", (locale) => {
+    const messages = require(`@/i18n/dictionaries/${locale}.json`);
+
+    render(
+      <NextIntlClientProvider locale={locale} messages={messages}>
+        <LoginForm />
+      </NextIntlClientProvider>
+    );
+
+    // Assertions
+  });
+});
+```
+
+### Verify Translation Keys Exist
+
+```typescript
+import en from "@/i18n/dictionaries/en.json";
+import es from "@/i18n/dictionaries/es.json";
+
+describe("Translation parity", () => {
+  it("should have same keys in all languages", () => {
+    const enKeys = Object.keys(en);
+    const esKeys = Object.keys(es);
+
+    expect(enKeys).toEqual(esKeys);
+  });
+});
+```
+
+## Common Pitfalls to Avoid
+
+### 1. Hardcoded Strings
+
+❌ **Bad:**
+
+```tsx
+<h1>Welcome to Dashboard</h1>
+```
+
+✅ **Good:**
+
+```tsx
+const t = useTranslations();
+<h1>{t("dashboard.welcome")}</h1>;
+```
+
+### 2. String Concatenation
+
+❌ **Bad:**
+
+```json
+{
+  "greeting": "Hello",
+  "name": "John"
+}
+```
+
+```tsx
+<p>{t("greeting") + ", " + t("name")}</p>
+```
+
+✅ **Good:**
+
+```json
+{
+  "greeting": "Hello, {name}"
+}
+```
+
+```tsx
+<p>{t("greeting", { name: "John" })}</p>
+```
+
+### 3. Assuming Word Order
+
+❌ **Bad:**
+
+```tsx
+<p>
+  {t("read")} {articleCount} {t("articles")}
+</p>
+```
+
+✅ **Good:**
+
+```json
+{
+  "articleCount": "Read {count} articles"
+}
+```
+
+```tsx
+<p>{t("articleCount", { count: articleCount })}</p>
+```
+
+### 4. Forgetting to Update All Locales
+
+Always update all language files simultaneously:
+
+```bash
+# Before committing
+git diff apps/frontend/i18n/dictionaries/en.json
+git diff apps/frontend/i18n/dictionaries/es.json
+```
+
+### 5. Using Locale for Logic
+
+❌ **Bad:**
+
+```tsx
+const locale = useLocale();
+if (locale === "es") {
+  return <SpanishLayout />;
+}
+```
+
+✅ **Good:**
+
+```tsx
+// Use translations, not locale-specific components
+const t = useTranslations();
+return <Layout title={t("title")} />;
+```
+
+## Documentation
+
+### Comment Complex Translations
+
+```json
+{
+  "passwordRequirements": "Password must be at least {minLength} characters with {requirements}",
+  "// passwordRequirements": "Used in registration form. Variables: minLength (number), requirements (comma-separated list)"
+}
+```
+
+### Maintain Translation Guide
+
+Create a `TRANSLATION_GUIDE.md`:
+
+```markdown
+# Translation Guide
+
+## Adding New Translations
+
+1. Add key to `en.json` (source of truth)
+2. Add translations to all other locale files
+3. Test in UI with all locales
+4. Commit all files together
+
+## Translation Conventions
+
+- Use Title Case for English headings
+- Use sentence case for Spanish
+- Keep technical terms in English (API, URL, etc.)
+```
+
+## Next Steps
+
+- [Troubleshooting](/frontend/i18n/troubleshooting) - Solve common issues
+- [Language Switcher](/frontend/i18n/language-switcher) - Implement language switching
+- [Configuration](/frontend/i18n/configuration) - Review setup details

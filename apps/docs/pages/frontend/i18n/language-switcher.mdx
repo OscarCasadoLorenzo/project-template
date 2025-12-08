@@ -1,0 +1,508 @@
+# Language Switcher Component
+
+The Language Switcher is a client-side component that allows users to manually change the application language.
+
+## Implementation
+
+### Component Code
+
+```tsx
+"use client";
+
+import { localeNames, locales, type Locale } from "@/i18n/config";
+import { usePathname, useRouter } from "next/navigation";
+import { useTransition } from "react";
+
+export default function LanguageSwitcher({
+  currentLocale,
+}: {
+  currentLocale: Locale;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
+
+  const switchLocale = (newLocale: Locale) => {
+    if (!pathname) return;
+
+    // Extract the path without the locale prefix
+    // pathname is like "/en/admin" or "/es/login"
+    const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}/, "");
+
+    // Build new path with the selected locale
+    const newPath = `/${newLocale}${pathWithoutLocale || ""}`;
+
+    startTransition(() => {
+      router.push(newPath);
+      router.refresh();
+    });
+  };
+
+  return (
+    <div className="flex gap-2">
+      {locales.map((locale) => (
+        <button
+          key={locale}
+          onClick={() => switchLocale(locale)}
+          disabled={isPending}
+          className={`px-3 py-1 rounded ${
+            currentLocale === locale
+              ? "bg-blue-600 text-white"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+          } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
+          aria-label={`Switch to ${localeNames[locale]}`}
+        >
+          {localeNames[locale]}
+        </button>
+      ))}
+    </div>
+  );
+}
+```
+
+## How It Works
+
+### 1. URL Manipulation
+
+The component extracts the current path and replaces the locale segment:
+
+```typescript
+// Current pathname: "/en/admin/users"
+const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}/, "");
+// Result: "/admin/users"
+
+const newPath = `/${newLocale}${pathWithoutLocale || ""}`;
+// New path: "/es/admin/users"
+```
+
+### 2. Navigation
+
+Uses Next.js router for client-side navigation:
+
+```typescript
+startTransition(() => {
+  router.push(newPath); // Navigate to new URL
+  router.refresh(); // Trigger server re-render
+});
+```
+
+**Critical:** Both `router.push()` and `router.refresh()` are required:
+
+- `router.push()` - Changes the URL
+- `router.refresh()` - Forces server components to re-render with new locale
+
+### 3. Loading State
+
+Uses React's `useTransition` for pending state:
+
+```typescript
+const [isPending, startTransition] = useTransition();
+
+// Disable buttons during transition
+<button disabled={isPending}>
+```
+
+## Integration
+
+### In Root Layout
+
+Pass the current locale from route params:
+
+```tsx
+export default async function RootLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: Promise<{ lang: Locale }>;
+}) {
+  const { lang } = await params;
+  const messages = await getMessages({ locale: lang });
+
+  return (
+    <html lang={lang}>
+      <body>
+        <NextIntlClientProvider locale={lang} messages={messages}>
+          <div className="flex h-screen">
+            <Sidebar />
+            <div className="flex-1 flex flex-col">
+              <header className="border-b bg-white px-4 py-2 flex justify-end">
+                <LanguageSwitcher currentLocale={lang} />
+              </header>
+              <main>{children}</main>
+            </div>
+          </div>
+        </NextIntlClientProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+## Styling Variations
+
+### Dropdown Style
+
+```tsx
+export default function LanguageSwitcherDropdown({
+  currentLocale,
+}: {
+  currentLocale: Locale;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
+
+  const switchLocale = (newLocale: Locale) => {
+    if (!pathname) return;
+    const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}/, "");
+    const newPath = `/${newLocale}${pathWithoutLocale || ""}`;
+
+    startTransition(() => {
+      router.push(newPath);
+      router.refresh();
+    });
+  };
+
+  return (
+    <select
+      value={currentLocale}
+      onChange={(e) => switchLocale(e.target.value as Locale)}
+      disabled={isPending}
+      className="px-3 py-1 rounded border border-gray-300"
+      aria-label="Select language"
+    >
+      {locales.map((locale) => (
+        <option key={locale} value={locale}>
+          {localeNames[locale]}
+        </option>
+      ))}
+    </select>
+  );
+}
+```
+
+### Flag Icons
+
+```tsx
+import { US, ES } from "country-flag-icons/react/3x2";
+
+const flagIcons: Record<Locale, React.ComponentType<{ className?: string }>> = {
+  en: US,
+  es: ES,
+};
+
+export default function LanguageSwitcherFlags({
+  currentLocale,
+}: {
+  currentLocale: Locale;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
+
+  const switchLocale = (newLocale: Locale) => {
+    if (!pathname) return;
+    const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}/, "");
+    const newPath = `/${newLocale}${pathWithoutLocale || ""}`;
+
+    startTransition(() => {
+      router.push(newPath);
+      router.refresh();
+    });
+  };
+
+  return (
+    <div className="flex gap-2">
+      {locales.map((locale) => {
+        const FlagIcon = flagIcons[locale];
+        return (
+          <button
+            key={locale}
+            onClick={() => switchLocale(locale)}
+            disabled={isPending}
+            className={`p-1 rounded ${
+              currentLocale === locale ? "ring-2 ring-blue-500" : ""
+            }`}
+            aria-label={`Switch to ${localeNames[locale]}`}
+            title={localeNames[locale]}
+          >
+            <FlagIcon className="w-6 h-4" />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+```
+
+### Compact Globe Icon
+
+```tsx
+import { Globe } from "lucide-react";
+
+export default function LanguageSwitcherCompact({
+  currentLocale,
+}: {
+  currentLocale: Locale;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
+
+  const switchLocale = (newLocale: Locale) => {
+    if (!pathname) return;
+    const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}/, "");
+    const newPath = `/${newLocale}${pathWithoutLocale || ""}`;
+
+    startTransition(() => {
+      router.push(newPath);
+      router.refresh();
+    });
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-3 py-1 rounded hover:bg-gray-100"
+        aria-label="Change language"
+      >
+        <Globe className="w-4 h-4" />
+        <span>{currentLocale.toUpperCase()}</span>
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 bg-white border rounded shadow-lg">
+          {locales.map((locale) => (
+            <button
+              key={locale}
+              onClick={() => switchLocale(locale)}
+              disabled={isPending}
+              className={`block w-full text-left px-4 py-2 hover:bg-gray-100 ${
+                currentLocale === locale ? "font-bold" : ""
+              }`}
+            >
+              {localeNames[locale]}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+## Advanced Features
+
+### Remember User Preference
+
+Store selected locale in localStorage or cookie:
+
+```tsx
+const switchLocale = (newLocale: Locale) => {
+  if (!pathname) return;
+
+  // Store preference
+  localStorage.setItem("preferredLocale", newLocale);
+  // Or use cookies for server-side access
+
+  const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}/, "");
+  const newPath = `/${newLocale}${pathWithoutLocale || ""}`;
+
+  startTransition(() => {
+    router.push(newPath);
+    router.refresh();
+  });
+};
+```
+
+### Smooth Transition
+
+Add loading indicator:
+
+```tsx
+export default function LanguageSwitcher({
+  currentLocale,
+}: {
+  currentLocale: Locale;
+}) {
+  const [isPending, startTransition] = useTransition();
+
+  return (
+    <div className="relative">
+      {isPending && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/50">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
+        </div>
+      )}
+      {/* Buttons */}
+    </div>
+  );
+}
+```
+
+### Keyboard Navigation
+
+```tsx
+export default function LanguageSwitcher({
+  currentLocale,
+}: {
+  currentLocale: Locale;
+}) {
+  const [selectedIndex, setSelectedIndex] = useState(
+    locales.indexOf(currentLocale)
+  );
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowRight") {
+      const nextIndex = (selectedIndex + 1) % locales.length;
+      setSelectedIndex(nextIndex);
+      switchLocale(locales[nextIndex]);
+    } else if (e.key === "ArrowLeft") {
+      const prevIndex = (selectedIndex - 1 + locales.length) % locales.length;
+      setSelectedIndex(prevIndex);
+      switchLocale(locales[prevIndex]);
+    }
+  };
+
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Select language"
+      onKeyDown={handleKeyDown}
+    >
+      {/* Buttons */}
+    </div>
+  );
+}
+```
+
+## Testing
+
+### Component Test
+
+```tsx
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { useRouter, usePathname } from "next/navigation";
+import LanguageSwitcher from "./LanguageSwitcher";
+
+jest.mock("next/navigation", () => ({
+  useRouter: jest.fn(),
+  usePathname: jest.fn(),
+}));
+
+describe("LanguageSwitcher", () => {
+  const mockPush = jest.fn();
+  const mockRefresh = jest.fn();
+
+  beforeEach(() => {
+    (useRouter as jest.Mock).mockReturnValue({
+      push: mockPush,
+      refresh: mockRefresh,
+    });
+    (usePathname as jest.Mock).mockReturnValue("/en/admin");
+  });
+
+  it("renders all locale buttons", () => {
+    render(<LanguageSwitcher currentLocale="en" />);
+
+    expect(screen.getByText("English")).toBeInTheDocument();
+    expect(screen.getByText("Español")).toBeInTheDocument();
+  });
+
+  it("highlights current locale", () => {
+    render(<LanguageSwitcher currentLocale="en" />);
+
+    const englishButton = screen.getByText("English");
+    expect(englishButton).toHaveClass("bg-blue-600");
+  });
+
+  it("switches locale when clicked", async () => {
+    render(<LanguageSwitcher currentLocale="en" />);
+
+    const spanishButton = screen.getByText("Español");
+    fireEvent.click(spanishButton);
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith("/es/admin");
+      expect(mockRefresh).toHaveBeenCalled();
+    });
+  });
+
+  it("handles root path correctly", async () => {
+    (usePathname as jest.Mock).mockReturnValue("/en");
+    render(<LanguageSwitcher currentLocale="en" />);
+
+    const spanishButton = screen.getByText("Español");
+    fireEvent.click(spanishButton);
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith("/es");
+    });
+  });
+});
+```
+
+## Accessibility
+
+Ensure the component is accessible:
+
+```tsx
+<button
+  onClick={() => switchLocale(locale)}
+  disabled={isPending}
+  aria-label={`Switch to ${localeNames[locale]}`}
+  aria-current={currentLocale === locale ? "true" : undefined}
+  role="radio"
+  aria-checked={currentLocale === locale}
+>
+  {localeNames[locale]}
+</button>
+```
+
+## Common Issues
+
+### Issue: Translations don't update immediately
+
+**Solution:** Ensure both `router.push()` and `router.refresh()` are called:
+
+```typescript
+startTransition(() => {
+  router.push(newPath);
+  router.refresh(); // ← Critical!
+});
+```
+
+### Issue: URL doesn't change
+
+**Solution:** Check pathname regex pattern matches your locale format:
+
+```typescript
+// For 2-letter locales
+const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}/, "");
+
+// For 2-letter + optional region (en-US)
+const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}(-[A-Z]{2})?/, "");
+```
+
+### Issue: Component re-renders unnecessarily
+
+**Solution:** Memoize the switch function:
+
+```typescript
+const switchLocale = useCallback(
+  (newLocale: Locale) => {
+    // ... implementation
+  },
+  [pathname, router]
+);
+```
+
+## Next Steps
+
+- [Usage Guide](/frontend/i18n/usage) - Learn more about using translations
+- [Best Practices](/frontend/i18n/best-practices) - Follow recommended patterns
+- [Troubleshooting](/frontend/i18n/troubleshooting) - Solve common issues
