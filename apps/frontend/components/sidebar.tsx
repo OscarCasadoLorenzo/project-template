@@ -2,15 +2,18 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { Dice6, Home, LogOut, Shield, UserCog } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export function Sidebar() {
   const { user, logout, hasRole } = useAuth();
   const pathname = usePathname();
+  const locale = useLocale();
+  const t = useTranslations();
 
   // Don't show sidebar on auth pages
-  if (pathname === "/login" || pathname === "/register") {
+  if (pathname?.includes("/login") || pathname?.includes("/register")) {
     return null;
   }
 
@@ -19,7 +22,7 @@ export function Sidebar() {
     return null;
   }
 
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path: string) => pathname === `/${locale}${path}`;
 
   return (
     <aside className="flex h-full w-64 flex-col border-r bg-background">
@@ -47,21 +50,21 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 space-y-1 p-4">
         <Link
-          href="/"
+          href={`/${locale}`}
           className={`flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-            isActive("/")
+            isActive("")
               ? "bg-blue-100 text-blue-900"
               : "text-gray-700 hover:bg-gray-100"
           }`}
         >
           <Home className="h-5 w-5" />
-          <span>Home</span>
+          <span>{t("navigation.home")}</span>
         </Link>
 
         {/* Characters feature removed from template navigation */}
 
         <Link
-          href="/dice"
+          href={`/${locale}/dice`}
           className={`flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
             isActive("/dice")
               ? "bg-blue-100 text-blue-900"
@@ -75,7 +78,7 @@ export function Sidebar() {
         {/* Admin only: User Management */}
         {hasRole(["ADMIN"]) && (
           <Link
-            href="/admin"
+            href={`/${locale}/admin`}
             className={`flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
               isActive("/admin")
                 ? "bg-blue-100 text-blue-900"
@@ -83,7 +86,7 @@ export function Sidebar() {
             }`}
           >
             <UserCog className="h-5 w-5" />
-            <span>User Management</span>
+            <span>{t("navigation.admin")}</span>
           </Link>
         )}
       </nav>
@@ -95,7 +98,7 @@ export function Sidebar() {
           className="flex w-full items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50 transition-colors"
         >
           <LogOut className="h-5 w-5" />
-          <span>Logout</span>
+          <span>{t("common.logout")}</span>
         </button>
       </div>
     </aside>

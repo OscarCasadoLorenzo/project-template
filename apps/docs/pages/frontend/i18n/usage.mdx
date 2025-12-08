@@ -1,0 +1,510 @@
+# i18n Usage Guide
+
+Learn how to use translations throughout your application, from basic text to complex scenarios.
+
+## Basic Usage
+
+### In Client Components
+
+Use the `useTranslations` hook to access translations:
+
+```tsx
+"use client";
+
+import { useTranslations } from "next-intl";
+
+export default function WelcomeMessage() {
+  const t = useTranslations();
+
+  return (
+    <div>
+      <h1>{t("common.welcome")}</h1>
+      <p>{t("common.login")}</p>
+    </div>
+  );
+}
+```
+
+### In Server Components
+
+Server components can also use `useTranslations`:
+
+```tsx
+import { useTranslations } from "next-intl";
+
+export default function ServerWelcome() {
+  const t = useTranslations();
+
+  return <h1>{t("common.welcome")}</h1>;
+}
+```
+
+### With Namespaces
+
+For better organization, scope translations to specific namespaces:
+
+```tsx
+import { useTranslations } from "next-intl";
+
+export default function LoginForm() {
+  const t = useTranslations("auth");
+
+  return (
+    <form>
+      <h2>{t("loginTitle")}</h2>
+      <input placeholder={t("email")} />
+      <input placeholder={t("password")} />
+    </form>
+  );
+}
+```
+
+This reads from `auth.loginTitle`, `auth.email`, etc.
+
+## Advanced Usage
+
+### Dynamic Values (Interpolation)
+
+Pass variables into translations:
+
+**Dictionary:**
+
+```json
+{
+  "greeting": "Hello, {name}!",
+  "items": "You have {count} items in your cart"
+}
+```
+
+**Component:**
+
+```tsx
+const t = useTranslations();
+
+<p>{t('greeting', { name: 'John' })}</p>
+// Output: "Hello, John!"
+
+<p>{t('items', { count: 5 })}</p>
+// Output: "You have 5 items in your cart"
+```
+
+### Pluralization
+
+Handle singular and plural forms:
+
+**Dictionary:**
+
+```json
+{
+  "apples": {
+    "one": "You have one apple",
+    "other": "You have {count} apples"
+  }
+}
+```
+
+**Component:**
+
+```tsx
+const t = useTranslations();
+
+<p>{t('apples', { count: 1 })}</p>
+// Output: "You have one apple"
+
+<p>{t('apples', { count: 5 })}</p>
+// Output: "You have 5 apples"
+```
+
+### Rich Text Formatting
+
+Use HTML or React components in translations:
+
+**Dictionary:**
+
+```json
+{
+  "terms": "I agree to the <link>terms and conditions</link>"
+}
+```
+
+**Component:**
+
+```tsx
+import { useTranslations } from "next-intl";
+import Link from "next/link";
+
+export default function TermsCheckbox() {
+  const t = useTranslations();
+
+  return (
+    <label>
+      {t.rich("terms", {
+        link: (chunks) => <Link href="/terms">{chunks}</Link>,
+      })}
+    </label>
+  );
+}
+```
+
+### Date and Time Formatting
+
+Format dates according to locale:
+
+```tsx
+import { useFormatter } from "next-intl";
+
+export default function EventDate() {
+  const format = useFormatter();
+  const eventDate = new Date("2024-12-25");
+
+  return (
+    <p>
+      {format.dateTime(eventDate, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })}
+    </p>
+  );
+}
+// English: "December 25, 2024"
+// Spanish: "25 de diciembre de 2024"
+```
+
+### Number Formatting
+
+Format numbers with locale-specific separators:
+
+```tsx
+import { useFormatter } from "next-intl";
+
+export default function Price() {
+  const format = useFormatter();
+
+  return (
+    <p>
+      {format.number(1234.56, {
+        style: "currency",
+        currency: "USD",
+      })}
+    </p>
+  );
+}
+// English: "$1,234.56"
+// Spanish: "1.234,56 US$"
+```
+
+## Accessing Current Locale
+
+### In Client Components
+
+```tsx
+import { useLocale } from "next-intl";
+
+export default function LocaleInfo() {
+  const locale = useLocale();
+
+  return <p>Current locale: {locale}</p>;
+}
+```
+
+### In Server Components
+
+```tsx
+import { getLocale } from "next-intl/server";
+
+export default async function ServerLocaleInfo() {
+  const locale = await getLocale();
+
+  return <p>Current locale: {locale}</p>;
+}
+```
+
+## Handling Missing Translations
+
+### Default Messages
+
+Provide fallback text for missing keys:
+
+```tsx
+const t = useTranslations();
+
+<p>{t("missingKey", { default: "Fallback text" })}</p>;
+```
+
+### Type-Safe Keys
+
+For better type safety, consider using a typed wrapper:
+
+```typescript
+// lib/i18n-typed.ts
+import { useTranslations as useTranslationsOriginal } from "next-intl";
+
+type TranslationKey = "common.welcome" | "common.logout" | "auth.loginTitle";
+// ... all your keys
+
+export function useTypedTranslations() {
+  const t = useTranslationsOriginal();
+  return (key: TranslationKey, values?: Record<string, any>) => t(key, values);
+}
+```
+
+## Page Metadata
+
+Localize page titles and descriptions:
+
+```tsx
+import { Locale } from "@/i18n/config";
+import { getMessages } from "next-intl/server";
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: Locale }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  const messages = await getMessages({ locale: lang });
+
+  return {
+    title: messages.pageTitle as string,
+    description: messages.pageDescription as string,
+  };
+}
+```
+
+## Forms and Validation
+
+### Form Labels
+
+```tsx
+const t = useTranslations("auth");
+
+<form>
+  <label htmlFor="email">{t("email")}</label>
+  <input id="email" type="email" />
+
+  <label htmlFor="password">{t("password")}</label>
+  <input id="password" type="password" />
+</form>;
+```
+
+### Error Messages
+
+```tsx
+const t = useTranslations("errors");
+
+{
+  errors.email && <span className="error">{t("invalidEmail")}</span>;
+}
+{
+  errors.password && <span className="error">{t("passwordTooShort")}</span>;
+}
+```
+
+### Validation with i18n
+
+```tsx
+import { useTranslations } from "next-intl";
+import { z } from "zod";
+
+export function useLoginSchema() {
+  const t = useTranslations("validation");
+
+  return z.object({
+    email: z.string().email(t("invalidEmail")),
+    password: z.string().min(8, t("passwordTooShort")),
+  });
+}
+```
+
+## Navigation with Locale
+
+### Using Link Component
+
+Links automatically preserve the current locale:
+
+```tsx
+import Link from "next/link";
+
+export default function Navigation() {
+  return (
+    <nav>
+      <Link href="/admin">Admin</Link>
+      {/* Automatically becomes /en/admin or /es/admin */}
+    </nav>
+  );
+}
+```
+
+### Using useRouter
+
+```tsx
+import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
+
+export default function NavigateButton() {
+  const router = useRouter();
+  const locale = useLocale();
+
+  const navigate = () => {
+    router.push(`/${locale}/admin`);
+  };
+
+  return <button onClick={navigate}>Go to Admin</button>;
+}
+```
+
+### Programmatic Navigation with Locale Change
+
+See [Language Switcher](/frontend/i18n/language-switcher) for implementation details.
+
+## API Integration
+
+### Sending Locale to Backend
+
+```tsx
+const locale = useLocale();
+
+const response = await fetch("/api/data", {
+  headers: {
+    "Accept-Language": locale,
+  },
+});
+```
+
+### Localized API Responses
+
+```tsx
+const t = useTranslations("messages");
+
+async function handleSubmit() {
+  try {
+    const response = await fetch("/api/submit");
+    const data = await response.json();
+
+    // Display localized success message
+    alert(t("submitSuccess"));
+  } catch (error) {
+    // Display localized error message
+    alert(t("submitError"));
+  }
+}
+```
+
+## Testing Translations
+
+### Component Testing
+
+```tsx
+import { NextIntlClientProvider } from "next-intl";
+import { render } from "@testing-library/react";
+
+const messages = {
+  common: {
+    welcome: "Welcome",
+  },
+};
+
+test("renders welcome message", () => {
+  const { getByText } = render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <WelcomeMessage />
+    </NextIntlClientProvider>
+  );
+
+  expect(getByText("Welcome")).toBeInTheDocument();
+});
+```
+
+### Testing Multiple Locales
+
+```tsx
+test.each([
+  { locale: "en", expected: "Welcome" },
+  { locale: "es", expected: "Bienvenido" },
+])("renders in $locale", ({ locale, expected }) => {
+  const messages = require(`@/i18n/dictionaries/${locale}.json`);
+
+  const { getByText } = render(
+    <NextIntlClientProvider locale={locale} messages={messages}>
+      <WelcomeMessage />
+    </NextIntlClientProvider>
+  );
+
+  expect(getByText(expected)).toBeInTheDocument();
+});
+```
+
+## Common Patterns
+
+### Conditional Text
+
+```tsx
+const t = useTranslations();
+const isLoggedIn = true;
+
+<button>{isLoggedIn ? t("common.logout") : t("common.login")}</button>;
+```
+
+### Lists and Arrays
+
+**Dictionary:**
+
+```json
+{
+  "features": ["Fast performance", "Easy to use", "Secure"]
+}
+```
+
+**Component:**
+
+```tsx
+const t = useTranslations();
+const features = t.raw("features") as string[];
+
+<ul>
+  {features.map((feature, i) => (
+    <li key={i}>{feature}</li>
+  ))}
+</ul>;
+```
+
+### Nested Objects
+
+**Dictionary:**
+
+```json
+{
+  "user": {
+    "profile": {
+      "title": "User Profile",
+      "subtitle": "Manage your information"
+    }
+  }
+}
+```
+
+**Component:**
+
+```tsx
+const t = useTranslations("user.profile");
+
+<div>
+  <h1>{t("title")}</h1>
+  <p>{t("subtitle")}</p>
+</div>;
+```
+
+## Performance Tips
+
+1. **Use namespaces** to load only needed translations
+2. **Avoid creating translation hooks in loops**
+3. **Cache formatted dates/numbers** when rendering lists
+4. **Use `t.raw()` sparingly** - it bypasses type checking
+
+## Next Steps
+
+- [Language Switcher](/frontend/i18n/language-switcher) - Implement language switching UI
+- [Best Practices](/frontend/i18n/best-practices) - Follow recommended patterns
+- [Troubleshooting](/frontend/i18n/troubleshooting) - Solve common issues

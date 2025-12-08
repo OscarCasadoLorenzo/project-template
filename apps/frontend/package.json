@@ -12,10 +12,10 @@
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
+    "@project-template/ui": "workspace:*",
     "@radix-ui/react-dialog": "^1.0.4",
     "@radix-ui/react-dropdown-menu": "^2.0.5",
     "@radix-ui/react-slot": "^1.0.2",
-    "@project-template/ui": "workspace:*",
     "@tanstack/react-query": "^5.0.0",
     "@tanstack/react-query-devtools": "^5.0.0",
     "axios": "^1.12.2",
@@ -23,6 +23,7 @@
     "clsx": "^2.0.0",
     "lucide-react": "^0.274.0",
     "next": "14.0.0",
+    "next-intl": "^4.5.8",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.6.0",
@@ -31,6 +32,8 @@
   },
   "devDependencies": {
     "@project-template/config": "workspace:*",
+    "@swc/core": "^1.15.3",
+    "@swc/jest": "^0.2.39",
     "@testing-library/jest-dom": "^6.1.5",
     "@testing-library/react": "^14.1.2",
     "@testing-library/user-event": "^14.5.1",

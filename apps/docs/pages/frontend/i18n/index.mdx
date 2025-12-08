@@ -1,0 +1,59 @@
+# Internationalization (i18n)
+
+Welcome to the comprehensive guide for internationalization in the frontend application.
+
+## Quick Links
+
+- [Overview](/frontend/i18n/overview) - Learn about the i18n architecture and features
+- [Configuration](/frontend/i18n/configuration) - Set up locales and translation files
+- [Usage Guide](/frontend/i18n/usage) - Use translations in your components
+- [Best Practices](/frontend/i18n/best-practices) - Follow recommended patterns
+- [Language Switcher](/frontend/i18n/language-switcher) - Implement language switching UI
+- [Troubleshooting](/frontend/i18n/troubleshooting) - Solve common issues
+
+## What is i18n?
+
+Internationalization (i18n) is the process of designing and developing your application to support multiple languages and regions. Our frontend uses **next-intl** to provide a seamless multi-language experience.
+
+## Current Support
+
+- **English (en)** - Default language
+- **Spanish (es)** - Fully translated
+
+## Key Features
+
+✅ **Automatic locale detection** from browser settings  
+✅ **Server-side rendering** with localized content  
+✅ **Type-safe** translation keys  
+✅ **SEO-friendly** URLs with locale prefixes  
+✅ **Easy language switching** with built-in component
+
+## Getting Started
+
+If you're new to i18n in this project:
+
+1. **Read the [Overview](/frontend/i18n/overview)** to understand the architecture
+2. **Follow the [Configuration](/frontend/i18n/configuration)** guide to set up new locales
+3. **Use the [Usage Guide](/frontend/i18n/usage)** to implement translations in components
+4. **Review [Best Practices](/frontend/i18n/best-practices)** for maintainable code
+
+## Quick Example
+
+```tsx
+import { useTranslations } from "next-intl";
+
+export default function MyComponent() {
+  const t = useTranslations();
+
+  return (
+    <div>
+      <h1>{t("common.welcome")}</h1>
+      <p>{t("auth.loginTitle")}</p>
+    </div>
+  );
+}
+```
+
+## Need Help?
+
+Check the [Troubleshooting](/frontend/i18n/troubleshooting) guide for solutions to common issues.

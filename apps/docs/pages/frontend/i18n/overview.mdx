@@ -1,0 +1,156 @@
+# Internationalization (i18n) Overview
+
+The frontend application uses **next-intl** for internationalization, providing a robust solution for multi-language support in Next.js App Router applications.
+
+## Key Features
+
+- 🌍 **Multi-language Support** - Currently supports English and Spanish
+- 🔄 **Automatic Locale Detection** - Detects user's preferred language from browser settings
+- 🚀 **Server-Side Rendering** - Full SSR support with localized content
+- 🎯 **Type-Safe** - TypeScript support for locales and translation keys
+- 📱 **SEO-Friendly** - Locale-prefixed URLs (`/en/*`, `/es/*`)
+- ⚡ **Performance** - Optimized bundle size with tree-shaking
+
+## Architecture Overview
+
+The i18n implementation is structured around several key components:
+
+```
+apps/frontend/
+├── i18n/
+│   ├── config.ts              # Locale configuration and types
+│   ├── request.ts             # Server-side i18n setup
+│   └── dictionaries/
+│       ├── en.json            # English translations
+│       └── es.json            # Spanish translations
+├── middleware.ts              # Locale detection and routing
+├── app/
+│   └── [lang]/               # Locale-based routing
+│       ├── layout.tsx        # Root layout with i18n provider
+│       └── ...               # All pages under locale segment
+└── components/
+    └── LanguageSwitcher.tsx  # Language switching UI
+```
+
+## Supported Locales
+
+| Locale Code | Language | Display Name |
+| ----------- | -------- | ------------ |
+| `en`        | English  | English      |
+| `es`        | Spanish  | Español      |
+
+## How It Works
+
+### 1. Middleware Detection
+
+When a user visits the application:
+
+1. Middleware intercepts the request
+2. Checks for locale in URL path
+3. If no locale, detects from browser's `Accept-Language` header
+4. Redirects to locale-prefixed URL (e.g., `/` → `/en/`)
+
+### 2. Server-Side Loading
+
+On each request:
+
+1. Next.js extracts `lang` parameter from URL
+2. `getMessages()` loads appropriate translation dictionary
+3. `NextIntlClientProvider` provides translations to components
+
+### 3. Client-Side Usage
+
+Components access translations using hooks:
+
+```tsx
+import { useTranslations } from "next-intl";
+
+export default function MyComponent() {
+  const t = useTranslations();
+
+  return <h1>{t("common.welcome")}</h1>;
+}
+```
+
+## URL Structure
+
+All routes are prefixed with the locale code:
+
+| Original Path | English URL | Spanish URL |
+| ------------- | ----------- | ----------- |
+| `/`           | `/en/`      | `/es/`      |
+| `/login`      | `/en/login` | `/es/login` |
+| `/admin`      | `/en/admin` | `/es/admin` |
+
+## Integration Points
+
+### With Authentication
+
+The i18n system integrates seamlessly with the authentication flow:
+
+- Login/Register forms are fully translated
+- Error messages appear in user's language
+- Protected routes maintain locale across navigation
+
+### With Routing
+
+The locale parameter is preserved across:
+
+- Client-side navigation (`useRouter`)
+- Server-side redirects
+- Link components
+- Form submissions
+
+### With Metadata
+
+Page metadata (title, description) can be localized:
+
+```tsx
+export async function generateMetadata({
+  params,
+}: {
+  params: { lang: Locale };
+}) {
+  const { lang } = await params;
+  const messages = await getMessages({ locale: lang });
+
+  return {
+    title: messages.pageTitle,
+    description: messages.pageDescription,
+  };
+}
+```
+
+## Benefits
+
+### For Users
+
+- Content in their preferred language
+- Seamless language switching
+- Better user experience
+
+### For Developers
+
+- Type-safe translation keys
+- Centralized translation management
+- Easy to add new languages
+- Clear separation of concerns
+
+### For SEO
+
+- Locale-specific URLs
+- Proper `lang` attributes
+- Potential for `hreflang` tags
+
+## Next Steps
+
+- [Configuration](/frontend/i18n/configuration) - Set up locales and dictionaries
+- [Usage Guide](/frontend/i18n/usage) - Learn how to use translations in components
+- [Best Practices](/frontend/i18n/best-practices) - Follow recommended patterns
+- [Language Switcher](/frontend/i18n/language-switcher) - Implement language switching UI
+
+## Related Resources
+
+- [next-intl Documentation](https://next-intl.dev/)
+- [Next.js Internationalization Guide](https://nextjs.org/docs/app/guides/internationalization)
+- [Frontend Architecture](/frontend/architecture)
