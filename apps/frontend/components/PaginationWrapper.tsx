@@ -1,15 +1,18 @@
 "use client";
 
 import { Pagination } from "@project-template/ui";
+import { useState } from "react";
 
 export function PaginationWrapper() {
+  const [page, setPage] = useState(1);
   const handlePageChange = (page: number) => {
     console.log("Navigating to page:", page);
+    setPage(page);
   };
 
   return (
     <Pagination
-      currentPage={1}
+      currentPage={page}
       totalPages={10}
       onPageChange={handlePageChange}
     />
