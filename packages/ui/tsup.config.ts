@@ -1,21 +1,18 @@
+import { readFileSync, writeFileSync } from 'fs';
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
   entry: ['src/index.ts'],
-  format: ['cjs', 'esm'],
+  format: ['esm'],
   dts: true,
   clean: true,
   treeshake: true,
-  splitting: true,
-  external: [
-    'react',
-    'react-dom',
-    'next',
-    'next/navigation',
-    '@radix-ui/*',
-    'class-variance-authority',
-    'lucide-react',
-  ],
+  splitting: false,
+  onSuccess: async () => {
+    const filePath = 'dist/index.js';
+    const content = readFileSync(filePath, 'utf-8');
+    writeFileSync(filePath, `"use client";\n${content}`);
+  },
   esbuildOptions(options) {
     options.jsx = 'automatic';
     options.jsxImportSource = 'react';
