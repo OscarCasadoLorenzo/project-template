@@ -1,4 +1,5 @@
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { PaginationWrapper } from "@/components/PaginationWrapper";
 import { Sidebar } from "@/components/sidebar";
 import { Locale, locales } from "@/i18n/config";
 import type { Metadata } from "next";
@@ -47,6 +48,7 @@ export default async function RootLayout({
                   {children}
                 </main>
               </div>
+              <PaginationWrapper />
             </div>
           </Providers>
         </NextIntlClientProvider>
