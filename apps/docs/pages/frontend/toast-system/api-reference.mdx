@@ -1,0 +1,358 @@
+# API Reference
+
+## useGlobalToast()
+
+The main hook for triggering toast notifications from any component.
+
+```tsx
+import { useGlobalToast } from "@/hooks";
+
+const toast = useGlobalToast();
+```
+
+### Return Value
+
+Returns an object with the following methods:
+
+```typescript
+{
+  success: (title: string, description?: string, duration?: number, action?: Action) => void;
+  error: (title: string, description?: string, duration?: number, action?: Action) => void;
+  info: (title: string, description?: string, duration?: number, action?: Action) => void;
+  warning: (title: string, description?: string, duration?: number, action?: Action) => void;
+  default: (title: string, description?: string, duration?: number, action?: Action) => void;
+  custom: (config: ToastConfig) => void;
+}
+```
+
+## Methods
+
+### success()
+
+Display a success toast notification.
+
+```typescript
+toast.success(
+  title: string,
+  description?: string,
+  duration?: number,
+  action?: Action
+): void
+```
+
+**Parameters:**
+
+- `title` - Main message to display (required)
+- `description` - Additional context (optional)
+- `duration` - Display time in milliseconds, 0 for indefinite (optional, default: 4000)
+- `action` - Action button configuration (optional)
+
+**Examples:**
+
+```tsx
+// Simple success
+toast.success("Saved!");
+
+// With description
+toast.success("User created", "The new user has been added");
+
+// With custom duration (5 seconds)
+toast.success("Processing complete", undefined, 5000);
+
+// With action button
+toast.success("File uploaded", "Click to view", 0, {
+  label: "View File",
+  onClick: () => openFile(),
+});
+```
+
+### error()
+
+Display an error toast notification.
+
+```typescript
+toast.error(
+  title: string,
+  description?: string,
+  duration?: number,
+  action?: Action
+): void
+```
+
+**Parameters:** Same as `success()`
+
+**Examples:**
+
+```tsx
+// Simple error
+toast.error("Failed to save");
+
+// With description
+toast.error("Network error", "Please check your connection");
+
+// With retry action
+toast.error("Upload failed", "Click to retry", 0, {
+  label: "Retry",
+  onClick: () => retryUpload(),
+});
+```
+
+### info()
+
+Display an informational toast notification.
+
+```typescript
+toast.info(
+  title: string,
+  description?: string,
+  duration?: number,
+  action?: Action
+): void
+```
+
+**Parameters:** Same as `success()`
+
+**Examples:**
+
+```tsx
+// Simple info
+toast.info("New update available");
+
+// With description
+toast.info("Maintenance scheduled", "System will be down at 2 AM");
+
+// With action
+toast.info("New features", "Check out what's new", 0, {
+  label: "Learn More",
+  onClick: () => router.push("/changelog"),
+});
+```
+
+### warning()
+
+Display a warning toast notification.
+
+```typescript
+toast.warning(
+  title: string,
+  description?: string,
+  duration?: number,
+  action?: Action
+): void
+```
+
+**Parameters:** Same as `success()`
+
+**Examples:**
+
+```tsx
+// Simple warning
+toast.warning("Unsaved changes");
+
+// With description
+toast.warning("Low storage", "You are running out of space");
+
+// With action
+toast.warning("Session expiring", "Click to extend", 0, {
+  label: "Extend Session",
+  onClick: () => extendSession(),
+});
+```
+
+### default()
+
+Display a default toast notification (neutral styling).
+
+```typescript
+toast.default(
+  title: string,
+  description?: string,
+  duration?: number,
+  action?: Action
+): void
+```
+
+**Parameters:** Same as `success()`
+
+**Example:**
+
+```tsx
+toast.default("Notification", "Something happened");
+```
+
+### custom()
+
+Display a toast with full custom configuration.
+
+```typescript
+toast.custom(config: ToastConfig): void
+```
+
+**Parameters:**
+
+- `config` - Complete toast configuration object
+
+**Example:**
+
+```tsx
+toast.custom({
+  title: "Custom Toast",
+  description: "Full control over configuration",
+  type: "info",
+  duration: 5000,
+  action: {
+    label: "Click Me",
+    onClick: () => console.log("Clicked!"),
+  },
+});
+```
+
+## Types
+
+### ToastConfig
+
+Configuration object for toast notifications.
+
+```typescript
+interface ToastConfig {
+  id?: string | number;
+  title?: string;
+  description?: string;
+  type?: ToastType;
+  duration?: number;
+  action?: Action;
+}
+```
+
+**Properties:**
+
+- `id` - Unique identifier (auto-generated if not provided)
+- `title` - Main message text
+- `description` - Additional context text
+- `type` - Toast type: `'success' | 'error' | 'info' | 'warning' | 'default'`
+- `duration` - Display time in milliseconds, 0 for indefinite (default: 4000)
+- `action` - Action button configuration
+
+### ToastType
+
+Available toast types.
+
+```typescript
+type ToastType = "success" | "error" | "info" | "warning" | "default";
+```
+
+### Action
+
+Action button configuration.
+
+```typescript
+interface Action {
+  label: string;
+  onClick: () => void;
+}
+```
+
+**Properties:**
+
+- `label` - Text displayed on the button
+- `onClick` - Callback function when button is clicked
+
+## Component Reference
+
+### ToastProvider
+
+The provider component that manages toast rendering. Already integrated in `apps/frontend/app/providers.tsx`.
+
+```tsx
+import { ToastProvider } from "@/components/ToastProvider";
+
+<ToastProvider />;
+```
+
+### Toaster
+
+The Sonner wrapper component from the UI package. Used internally by `ToastProvider`.
+
+```tsx
+import { Toaster } from "@project-template/ui";
+
+<Toaster position="top-right" richColors closeButton />;
+```
+
+**Props:**
+
+- `position` - Toast position on screen
+- `richColors` - Use richer color variants
+- `closeButton` - Show close button on toasts
+- ...and all other Sonner props
+
+## Atoms Reference
+
+### toastAtom
+
+Jotai atom holding the current toast state.
+
+```typescript
+import { toastAtom } from "@/lib/atoms/toast.atoms";
+import { useAtomValue } from "jotai";
+
+const toastConfig = useAtomValue(toastAtom);
+```
+
+**Type:** `Atom<ToastConfig | null>`
+
+### triggerToastAtom
+
+Write-only Jotai atom for triggering toasts.
+
+```typescript
+import { triggerToastAtom } from "@/lib/atoms/toast.atoms";
+import { useSetAtom } from "jotai";
+
+const triggerToast = useSetAtom(triggerToastAtom);
+triggerToast({ title: "Hello", type: "info" });
+```
+
+**Type:** `WritableAtom<null, ToastConfig>`
+
+## Migration Guide
+
+### From react-hot-toast
+
+```tsx
+// Before (react-hot-toast)
+import toast from "react-hot-toast";
+toast.success("Saved!");
+
+// After (global toast system)
+import { useGlobalToast } from "@/hooks";
+const toast = useGlobalToast();
+toast.success("Saved!");
+```
+
+### From Radix Toast
+
+```tsx
+// Before (Radix Toast)
+<Toast>
+  <ToastTitle>Success</ToastTitle>
+  <ToastDescription>Saved successfully</ToastDescription>
+</Toast>;
+
+// After (global toast system)
+toast.success("Success", "Saved successfully");
+```
+
+### From Custom Implementation
+
+Replace your custom toast logic with the global hook:
+
+```tsx
+// Before
+const [toasts, setToasts] = useState([]);
+const showToast = (msg) => setToasts([...toasts, msg]);
+
+// After
+const toast = useGlobalToast();
+toast.success("Message");
+```

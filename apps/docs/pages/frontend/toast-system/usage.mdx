@@ -1,0 +1,284 @@
+# Usage Guide
+
+## Basic Usage
+
+Import the hook and call the appropriate method:
+
+```tsx
+import { useGlobalToast } from "@/hooks";
+
+function MyComponent() {
+  const toast = useGlobalToast();
+
+  const handleSuccess = () => {
+    toast.success("Changes saved successfully!");
+  };
+
+  const handleError = () => {
+    toast.error("Failed to save changes", "Please try again later");
+  };
+
+  return (
+    <div>
+      <button onClick={handleSuccess}>Save</button>
+      <button onClick={handleError}>Trigger Error</button>
+    </div>
+  );
+}
+```
+
+## Toast Types
+
+### Success
+
+Used for successful operations:
+
+```tsx
+toast.success("Operation completed!");
+toast.success("File uploaded", "Your file has been uploaded successfully");
+```
+
+### Error
+
+Used for errors and failures:
+
+```tsx
+toast.error("Something went wrong");
+toast.error("Failed to delete", "The item could not be deleted");
+```
+
+### Info
+
+Used for informational messages:
+
+```tsx
+toast.info("New update available");
+toast.info("System maintenance", "Scheduled for tonight at 2 AM");
+```
+
+### Warning
+
+Used for warnings and cautions:
+
+```tsx
+toast.warning("Unsaved changes");
+toast.warning("Low storage", "You are running out of space");
+```
+
+### Default
+
+Used for general notifications:
+
+```tsx
+toast.default("General notification");
+```
+
+## Advanced Features
+
+### Custom Duration
+
+Control how long the toast is displayed (in milliseconds):
+
+```tsx
+// Show for 5 seconds (default is 4 seconds)
+toast.success("Saved!", undefined, 5000);
+
+// Show indefinitely (until dismissed manually)
+toast.warning("Important!", "Read this carefully", 0);
+```
+
+### Action Buttons
+
+Add clickable action buttons to toasts:
+
+```tsx
+toast.warning(
+  "Unsaved changes",
+  "You have unsaved changes that will be lost",
+  0, // Duration (0 = indefinite)
+  {
+    label: "Save Now",
+    onClick: () => handleSave(),
+  }
+);
+```
+
+### Custom Configuration
+
+For complete control, use the `custom` method:
+
+```tsx
+toast.custom({
+  title: "Custom Toast",
+  description: "With full control",
+  type: "info",
+  duration: 3000,
+  action: {
+    label: "View Details",
+    onClick: () => console.log("Action clicked"),
+  },
+});
+```
+
+## Common Use Cases
+
+### API Success/Error Handling
+
+```tsx
+const handleCreateUser = async (data) => {
+  try {
+    await createUser(data);
+    toast.success("User created successfully");
+  } catch (error) {
+    toast.error("Failed to create user", error.message);
+  }
+};
+```
+
+### Form Submissions
+
+```tsx
+function LoginForm() {
+  const toast = useGlobalToast();
+
+  const onSubmit = async (data: LoginData) => {
+    try {
+      await login(data);
+      toast.success("Welcome back!");
+      router.push("/dashboard");
+    } catch (error) {
+      toast.error("Login failed", "Invalid credentials");
+    }
+  };
+}
+```
+
+### React Query Integration
+
+```tsx
+function useCreateUser() {
+  const toast = useGlobalToast();
+
+  return useMutation({
+    mutationFn: createUser,
+    onSuccess: () => {
+      toast.success("User created successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to create user", error.message);
+    },
+  });
+}
+```
+
+### Event Handlers
+
+```tsx
+function DataTable() {
+  const toast = useGlobalToast();
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteItem(id);
+      toast.success("Item deleted");
+    } catch (error) {
+      toast.error("Deletion failed", "Please try again");
+    }
+  };
+}
+```
+
+### Confirmation with Actions
+
+```tsx
+const handleDelete = (id: string) => {
+  toast.warning("Delete this item?", "This action cannot be undone", 0, {
+    label: "Confirm Delete",
+    onClick: async () => {
+      await deleteItem(id);
+      toast.success("Item deleted");
+    },
+  });
+};
+```
+
+### Sequential Toasts
+
+```tsx
+const handleProcess = () => {
+  toast.info("Loading...", "Step 1 of 3");
+
+  setTimeout(() => {
+    toast.info("Processing...", "Step 2 of 3");
+  }, 1000);
+
+  setTimeout(() => {
+    toast.success("Complete!", "Step 3 of 3 - All done");
+  }, 2000);
+};
+```
+
+## Best Practices
+
+### Message Guidelines
+
+1. **Keep messages concise** - Users should understand at a glance
+2. **Use appropriate types** - Match severity to message type
+3. **Provide context** - Use descriptions for complex messages
+4. **Be specific** - Avoid generic "Error occurred" messages
+
+### Duration Recommendations
+
+- **Success**: 3-4 seconds (default)
+- **Error**: 5-6 seconds or indefinite with action
+- **Info**: 4-5 seconds
+- **Warning**: 6+ seconds or indefinite
+
+### Action Button Usage
+
+- Offer undo actions for destructive operations
+- Provide retry options for failed operations
+- Link to details pages for more information
+- Keep action labels short (1-2 words)
+
+### Avoiding Toast Fatigue
+
+- Don't show toasts for every minor action
+- Batch multiple updates into one toast when possible
+- Use inline validation instead of toasts for form errors
+- Reserve toasts for important feedback
+
+## Configuration
+
+### Toaster Position
+
+Configure the toast position by editing `apps/frontend/components/ToastProvider.tsx`:
+
+```tsx
+<Toaster position="top-right" richColors closeButton />
+```
+
+Available positions:
+
+- `top-left`
+- `top-right` (default)
+- `top-center`
+- `bottom-left`
+- `bottom-right`
+- `bottom-center`
+
+### Theme Customization
+
+Customize toast styling in your `globals.css`:
+
+```css
+.toaster {
+  /* Custom toast container styles */
+}
+
+.toast {
+  /* Custom individual toast styles */
+}
+```
+
+The toast system uses CSS variables from your Tailwind theme for consistent styling.

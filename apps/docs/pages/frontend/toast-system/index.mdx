@@ -1,0 +1,58 @@
+# Toast Notification System
+
+## Overview
+
+The global toast notification system provides a consistent, accessible way to display user feedback across the application using **Sonner** (shadcn UI toast component) and **Jotai** for state management.
+
+## Key Features
+
+- 🌍 **Global State Management** - Trigger toasts from anywhere using Jotai
+- 🎨 **Five Toast Types** - success, error, info, warning, default
+- ⚡ **Flexible API** - Simple methods with optional advanced features
+- ♿ **Accessible** - Built on Sonner's accessible foundation
+- 🎯 **Type-Safe** - Full TypeScript support
+- 🏗️ **Clean Architecture** - Follows monorepo best practices
+
+## Architecture
+
+### Structure
+
+The toast system is organized following our monorepo structure:
+
+- **Frontend App (`apps/frontend`)**:
+  - `/lib/atoms/toast.atoms.ts` - Jotai atoms for global state
+  - `/hooks/useGlobalToast.ts` - Hook for triggering toasts
+  - `/components/ToastProvider.tsx` - Provider component that renders toasts
+
+- **UI Package (`packages/ui`)**:
+  - `/src/primitives/toaster.tsx` - Sonner wrapper component (presentational only)
+
+### Design Principles
+
+- **Separation of Concerns**: UI package contains only presentational components; all business logic resides in the frontend app
+- **Global State**: Jotai atoms enable toast triggering from anywhere in the app
+- **Type Safety**: Full TypeScript support with well-defined interfaces
+- **Accessibility**: Built on Sonner's accessible toast implementation
+
+## Quick Example
+
+```tsx
+import { useGlobalToast } from "@/hooks";
+
+function MyComponent() {
+  const toast = useGlobalToast();
+
+  return (
+    <button onClick={() => toast.success("Operation completed!")}>
+      Click me
+    </button>
+  );
+}
+```
+
+## What's Next?
+
+- [Getting Started](/frontend/toast-system/getting-started) - Installation and setup
+- [Usage Guide](/frontend/toast-system/usage) - Examples and best practices
+- [API Reference](/frontend/toast-system/api-reference) - Complete API documentation
+- [Technical Details](/frontend/toast-system/technical-details) - Architecture and data flow
