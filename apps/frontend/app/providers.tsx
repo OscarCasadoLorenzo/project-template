@@ -1,8 +1,10 @@
 "use client";
 
+import { ToastProvider } from "@/components/ToastProvider";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { Provider as JotaiProvider } from "jotai";
 import { useState, type ReactNode } from "react";
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -15,15 +17,18 @@ export function Providers({ children }: { children: ReactNode }) {
             refetchInterval: 30 * 1000, // 30 seconds
           },
         },
-      })
+      }),
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        {children}
-        <ReactQueryDevtools initialIsOpen={false} />
-      </AuthProvider>
-    </QueryClientProvider>
+    <JotaiProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <ToastProvider />
+          {children}
+          <ReactQueryDevtools initialIsOpen={false} />
+        </AuthProvider>
+      </QueryClientProvider>
+    </JotaiProvider>
   );
 }
