@@ -5,8 +5,8 @@ import { useState } from "react";
 
 export function PaginationWrapper() {
   const [page, setPage] = useState(1);
+
   const handlePageChange = (page: number) => {
-    console.log("Navigating to page:", page);
     setPage(page);
   };
 
