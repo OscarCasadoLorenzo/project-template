@@ -5,6 +5,7 @@ const withNextIntlConfig = withNextIntl("./i18n/request.ts");
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  transpilePackages: ["@project-template/ui"],
   async rewrites() {
     return [
       {
