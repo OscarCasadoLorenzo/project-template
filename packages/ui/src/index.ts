@@ -1,3 +1,5 @@
+'use client';
+
 // Primitive components
 export * from './primitives/accordion';
 export * from './primitives/alert';
@@ -49,7 +51,10 @@ export * from './primitives/use-mobile';
 // Utilities
 export * from './lib/utils';
 
+// Components
+export { Pagination } from './components/pagination';
+export type { PaginationProps } from './components/pagination';
+
 // Templates
 export * from './templates/Footer';
-export * from './templates/InitialIcons';
 export * from './templates/NavigationMenu';

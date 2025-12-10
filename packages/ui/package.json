@@ -2,12 +2,20 @@
   "name": "@project-template/ui",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "main": "./dist/index.js",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
-    "build": "tsup src/index.ts --dts --format cjs,esm --external react --publicDir src/public",
+    "build": "tsup",
     "clean": "rm -rf dist",
-    "dev": "tsup src/index.ts --dts --format cjs,esm --external react --watch --publicDir src/public",
+    "dev": "tsup --watch",
     "lint": "eslint \"src/**/*.ts*\"",
     "test": "jest",
     "test:watch": "jest --watch",
