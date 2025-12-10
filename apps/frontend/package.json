@@ -52,6 +52,7 @@
     "date-fns": "^2.30.0",
     "embla-carousel-react": "^8.6.0",
     "input-otp": "^1.4.2",
+    "jotai": "^2.10.3",
     "lucide-react": "^0.290.0",
     "next": "14.0.0",
     "next-intl": "^4.5.8",
