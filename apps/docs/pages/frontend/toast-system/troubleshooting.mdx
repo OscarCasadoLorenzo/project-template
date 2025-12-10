@@ -1,0 +1,469 @@
+# Troubleshooting
+
+## Common Issues
+
+### Toasts Not Appearing
+
+#### Problem
+
+Toasts don't show up when triggered.
+
+#### Solutions
+
+1. **Check if Jotai is installed**
+
+   ```bash
+   cd apps/frontend
+   pnpm install
+   ```
+
+2. **Verify ToastProvider is mounted**
+
+   Check `apps/frontend/app/providers.tsx`:
+
+   ```tsx
+   <JotaiProvider>
+     <ToastProvider /> {/* Should be here */}
+     {children}
+   </JotaiProvider>
+   ```
+
+3. **Rebuild UI package**
+
+   ```bash
+   cd packages/ui
+   pnpm run build
+   ```
+
+4. **Check browser console**
+   - Look for JavaScript errors
+   - Check for import errors
+   - Verify no TypeScript compilation errors
+
+5. **Restart dev server**
+   ```bash
+   cd apps/frontend
+   pnpm run dev
+   ```
+
+### TypeScript Errors
+
+#### Problem
+
+TypeScript errors when importing or using the hook.
+
+#### Solutions
+
+1. **Install dependencies**
+
+   ```bash
+   cd apps/frontend
+   pnpm install
+   ```
+
+2. **Restart TypeScript server**
+
+   In VS Code:
+   - Cmd+Shift+P (Mac) or Ctrl+Shift+P (Windows/Linux)
+   - Type "TypeScript: Restart TS Server"
+   - Press Enter
+
+3. **Check import paths**
+
+   Verify `tsconfig.json` has correct path mappings:
+
+   ```json
+   {
+     "compilerOptions": {
+       "paths": {
+         "@/*": ["./src/*", "./*"]
+       }
+     }
+   }
+   ```
+
+4. **Verify Jotai is in dependencies**
+
+   Check `apps/frontend/package.json`:
+
+   ```json
+   {
+     "dependencies": {
+       "jotai": "^2.10.3"
+     }
+   }
+   ```
+
+### Action Button Not Showing
+
+#### Problem
+
+Action button doesn't appear on toasts.
+
+#### Solution
+
+Ensure you're passing the action parameter correctly:
+
+```tsx
+// ✅ Correct
+toast.warning(
+  "Title",
+  "Description",
+  0, // Duration must be provided even if you want default
+  {
+    label: "Action",
+    onClick: () => console.log("clicked"),
+  }
+);
+
+// ❌ Incorrect - missing duration parameter
+toast.warning("Title", "Description", {
+  label: "Action",
+  onClick: () => console.log("clicked"),
+});
+```
+
+### Styling Issues
+
+#### Problem
+
+Toasts don't match your theme or have incorrect styling.
+
+#### Solutions
+
+1. **Check Tailwind configuration**
+
+   Ensure Tailwind is scanning the UI package:
+
+   ```js
+   // tailwind.config.js
+   module.exports = {
+     content: [
+       "./app/**/*.{js,ts,jsx,tsx}",
+       "../../packages/ui/src/**/*.{js,ts,jsx,tsx}", // Include UI package
+     ],
+   };
+   ```
+
+2. **Verify globals.css is imported**
+
+   In `apps/frontend/app/layout.tsx`:
+
+   ```tsx
+   import "./globals.css";
+   ```
+
+3. **Rebuild UI package**
+
+   ```bash
+   cd packages/ui
+   pnpm run build
+   ```
+
+4. **Clear Next.js cache**
+   ```bash
+   cd apps/frontend
+   rm -rf .next
+   pnpm run dev
+   ```
+
+### Multiple Toasts Not Stacking
+
+#### Problem
+
+Multiple toasts overlap or don't stack properly.
+
+#### Solution
+
+This is expected Sonner behavior. Toasts automatically stack. If you're seeing issues:
+
+1. Check if multiple `Toaster` components are mounted (there should only be one)
+2. Verify `ToastProvider` is mounted only once in `providers.tsx`
+3. Check browser console for errors
+
+### Toast Duration Not Working
+
+#### Problem
+
+Custom duration is ignored.
+
+#### Solutions
+
+1. **Ensure duration is a number**
+
+   ```tsx
+   // ✅ Correct
+   toast.success("Message", undefined, 5000);
+
+   // ❌ Incorrect
+   toast.success("Message", undefined, "5000");
+   ```
+
+2. **Remember duration is in milliseconds**
+
+   ```tsx
+   toast.success("Message", undefined, 5000); // 5 seconds
+   ```
+
+3. **Use 0 for indefinite**
+   ```tsx
+   toast.warning("Important", "Read this", 0); // Stays until dismissed
+   ```
+
+## Performance Issues
+
+### Too Many Re-renders
+
+#### Problem
+
+Component re-renders excessively when toasts are triggered.
+
+#### Solution
+
+This shouldn't happen due to Jotai's atomic updates. If it does:
+
+1. **Check if you're reading the atom unnecessarily**
+
+   ```tsx
+   // ❌ Don't do this
+   const toastConfig = useAtomValue(toastAtom);
+
+   // ✅ Just use the hook
+   const toast = useGlobalToast();
+   ```
+
+2. **Verify Provider structure**
+   - Only `ToastProvider` should read the atom
+   - Other components should only write via the hook
+
+### Slow Toast Animations
+
+#### Problem
+
+Toast animations are laggy or slow.
+
+#### Solutions
+
+1. **Check browser performance**
+   - Open Chrome DevTools Performance tab
+   - Record while triggering toasts
+   - Look for long tasks
+
+2. **Reduce concurrent toasts**
+   - Don't trigger many toasts simultaneously
+   - Space them out with delays if needed
+
+3. **Check for CSS conflicts**
+   - Verify no conflicting animations
+   - Check for expensive CSS selectors
+
+## Integration Issues
+
+### Conflicts with Existing Toast Libraries
+
+#### Problem
+
+Multiple toast systems are active simultaneously.
+
+#### Solution
+
+Remove old toast libraries:
+
+```bash
+# Remove old dependencies
+cd apps/frontend
+pnpm remove react-hot-toast react-toastify
+
+# Clean up imports
+# Find and remove old toast imports in your code
+```
+
+### Context/Provider Nesting Issues
+
+#### Problem
+
+Toasts don't work in certain parts of the app.
+
+#### Solution
+
+Ensure `JotaiProvider` wraps the entire app:
+
+```tsx
+// apps/frontend/app/providers.tsx
+export function Providers({ children }) {
+  return (
+    <JotaiProvider>
+      {" "}
+      {/* Must be at the root */}
+      <QueryClientProvider>
+        <AuthProvider>
+          <ToastProvider />
+          {children}
+        </AuthProvider>
+      </QueryClientProvider>
+    </JotaiProvider>
+  );
+}
+```
+
+### Toasts Not Working in Server Components
+
+#### Problem
+
+Cannot use `useGlobalToast()` in Server Components.
+
+#### Solution
+
+Toasts only work in Client Components. Add `'use client'` directive:
+
+```tsx
+"use client"; // Add this at the top
+
+import { useGlobalToast } from "@/hooks";
+
+export default function MyComponent() {
+  const toast = useGlobalToast();
+  // ...
+}
+```
+
+## Build/Deployment Issues
+
+### Build Fails
+
+#### Problem
+
+Production build fails with toast-related errors.
+
+#### Solutions
+
+1. **Check TypeScript errors**
+
+   ```bash
+   cd apps/frontend
+   pnpm typecheck
+   ```
+
+2. **Rebuild UI package first**
+
+   ```bash
+   cd packages/ui
+   pnpm run build
+   cd ../../apps/frontend
+   pnpm run build
+   ```
+
+3. **Clear caches**
+   ```bash
+   rm -rf node_modules .next
+   pnpm install
+   pnpm run build
+   ```
+
+### Toasts Don't Work in Production
+
+#### Problem
+
+Toasts work in development but not in production.
+
+#### Solutions
+
+1. **Check environment variables**
+   - Ensure no dev-only configuration
+   - Verify all required dependencies are in `dependencies`, not `devDependencies`
+
+2. **Check console errors in production**
+   - Use browser DevTools on production site
+   - Look for missing modules or import errors
+
+3. **Verify build output includes toast files**
+   ```bash
+   cd packages/ui
+   ls dist/  # Should include toaster exports
+   ```
+
+## Browser-Specific Issues
+
+### Safari Issues
+
+#### Problem
+
+Toasts don't work correctly in Safari.
+
+#### Solutions
+
+1. **Check for ESM/CJS issues**
+   - Ensure Sonner is properly bundled
+   - Verify Next.js configuration
+
+2. **Test in private browsing**
+   - Rule out extension conflicts
+
+### Mobile Browser Issues
+
+#### Problem
+
+Toasts don't display correctly on mobile.
+
+#### Solutions
+
+1. **Check viewport settings**
+
+   ```html
+   <meta name="viewport" content="width=device-width, initial-scale=1" />
+   ```
+
+2. **Test toast position**
+   - Try different positions (top-center might work better on mobile)
+
+   ```tsx
+   <Toaster position="top-center" />
+   ```
+
+3. **Reduce toast width**
+   - Add custom styles in `globals.css`:
+   ```css
+   @media (max-width: 640px) {
+     .toaster {
+       max-width: 90vw;
+     }
+   }
+   ```
+
+## Getting Help
+
+If you're still experiencing issues:
+
+1. **Check the examples**
+   - Review `/toast-test` page
+   - Look at `ToastDemo` component
+
+2. **Review documentation**
+   - [Usage Guide](/frontend/toast-system/usage)
+   - [API Reference](/frontend/toast-system/api-reference)
+   - [Technical Details](/frontend/toast-system/technical-details)
+
+3. **Inspect the implementation**
+   - `apps/frontend/lib/atoms/toast.atoms.ts`
+   - `apps/frontend/hooks/useGlobalToast.ts`
+   - `apps/frontend/components/ToastProvider.tsx`
+
+4. **Check dependencies**
+   ```bash
+   cd apps/frontend
+   pnpm list jotai sonner
+   ```
+
+## Quick Fixes Checklist
+
+Run through this checklist for most issues:
+
+- [ ] `pnpm install` in `apps/frontend`
+- [ ] `pnpm run build` in `packages/ui`
+- [ ] Restart dev server
+- [ ] Clear browser cache
+- [ ] Check browser console for errors
+- [ ] Verify `ToastProvider` is mounted
+- [ ] Verify `JotaiProvider` wraps app
+- [ ] Check for TypeScript errors
+- [ ] Test in a new browser tab/incognito mode

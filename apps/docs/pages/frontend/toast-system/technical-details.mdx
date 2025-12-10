@@ -1,0 +1,327 @@
+# Technical Details
+
+## Data Flow
+
+### User Action Flow
+
+```
+User Action → Component → useGlobalToast() → Jotai Atom
+→ ToastProvider → Sonner → Visual Toast
+```
+
+### Detailed Flow
+
+1. **User triggers action** (button click, form submit, API response)
+2. **Component calls hook** - `toast.success('Message')`
+3. **Hook updates atom** - Writes to `triggerToastAtom`
+4. **Atom state changes** - `toastAtom` receives new config
+5. **Provider detects change** - `useEffect` in `ToastProvider` triggers
+6. **Sonner renders toast** - Visual notification appears
+7. **User sees feedback** - Toast displayed with animations
+
+## Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  apps/frontend                               │
+│  ┌────────────────────────────────────────────────────┐     │
+│  │  State Layer: lib/atoms/toast.atoms.ts             │     │
+│  │  • toastAtom (read-write)                          │     │
+│  │  • triggerToastAtom (write-only)                   │     │
+│  └────────────────────────────────────────────────────┘     │
+│                         ↓                                    │
+│  ┌────────────────────────────────────────────────────┐     │
+│  │  Hook Layer: hooks/useGlobalToast.ts               │     │
+│  │  • Convenience methods (success, error, etc.)      │     │
+│  │  • Type-safe API                                   │     │
+│  └────────────────────────────────────────────────────┘     │
+│                         ↓                                    │
+│  ┌────────────────────────────────────────────────────┐     │
+│  │  Provider Layer: components/ToastProvider.tsx      │     │
+│  │  • Listens to atom changes                         │     │
+│  │  • Triggers Sonner toasts                          │     │
+│  └────────────────────────────────────────────────────┘     │
+└────────────────────┬─────────────────────────────────────────┘
+                     │ uses
+                     ↓
+┌─────────────────────────────────────────────────────────────┐
+│                  packages/ui                                 │
+│  └─ Presentation: src/primitives/toaster.tsx                │
+│     • Sonner wrapper with theme styling                     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Component Hierarchy
+
+```
+<JotaiProvider>
+  <QueryClientProvider>
+    <AuthProvider>
+      <ToastProvider />  ← Listens to toast atom
+        <Toaster />      ← Sonner component
+      {children}         ← Your app pages
+        └─ Any Component
+           └─ useGlobalToast()  ← Trigger toasts
+    </AuthProvider>
+  </QueryClientProvider>
+</JotaiProvider>
+```
+
+## Type System
+
+### Core Types
+
+```typescript
+// Toast types
+type ToastType = "success" | "error" | "info" | "warning" | "default";
+
+// Configuration interface
+interface ToastConfig {
+  id?: string | number;
+  title?: string;
+  description?: string;
+  type?: ToastType;
+  duration?: number;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
+}
+
+// Hook return type
+interface ToastMethods {
+  success: (
+    title: string,
+    description?: string,
+    duration?: number,
+    action?: Action
+  ) => void;
+  error: (
+    title: string,
+    description?: string,
+    duration?: number,
+    action?: Action
+  ) => void;
+  info: (
+    title: string,
+    description?: string,
+    duration?: number,
+    action?: Action
+  ) => void;
+  warning: (
+    title: string,
+    description?: string,
+    duration?: number,
+    action?: Action
+  ) => void;
+  default: (
+    title: string,
+    description?: string,
+    duration?: number,
+    action?: Action
+  ) => void;
+  custom: (config: ToastConfig) => void;
+}
+```
+
+## State Management
+
+### Jotai Atoms
+
+#### toastAtom (Read-Write)
+
+Holds the current toast configuration.
+
+```typescript
+export const toastAtom = atom<ToastConfig | null>(null);
+```
+
+#### triggerToastAtom (Write-Only)
+
+Triggers a new toast by updating `toastAtom` with a unique ID.
+
+```typescript
+export const triggerToastAtom = atom(null, (get, set, config: ToastConfig) => {
+  set(toastAtom, { ...config, id: Date.now() });
+});
+```
+
+### Why Two Atoms?
+
+- **Separation of concerns** - Reading state vs. triggering actions
+- **ID generation** - Ensures each toast triggers even with identical content
+- **Clean API** - Hook only writes, provider only reads
+- **Performance** - Minimal re-renders
+
+## Performance Optimization
+
+### Minimal Re-renders
+
+```
+Component triggers toast
+    ↓
+Jotai atom update (O(1) - very fast)
+    ↓
+Only ToastProvider re-renders
+    ↓
+Other components unaffected
+```
+
+### Portal Rendering
+
+Sonner uses React portals to render toasts outside the main component tree, preventing:
+
+- Layout thrashing
+- CSS inheritance issues
+- Z-index conflicts
+- Performance bottlenecks
+
+### Efficient Updates
+
+- **Atomic updates** - Only affected subscribers re-render
+- **Debounced animations** - Smooth transitions
+- **Queue management** - Handles multiple toasts efficiently
+
+## Design Decisions
+
+### Why Jotai?
+
+- ✅ **Lightweight** - Only 3KB
+- ✅ **Atomic** - Fine-grained reactivity
+- ✅ **TypeScript** - First-class support
+- ✅ **Next.js** - Works great with App Router
+- ✅ **Simple** - Minimal API surface
+
+### Why Sonner?
+
+- ✅ **shadcn/ui** - Part of our design system
+- ✅ **Accessible** - ARIA compliant
+- ✅ **Beautiful** - Great animations and styling
+- ✅ **Feature-rich** - Actions, stacking, themes
+- ✅ **Maintained** - Active development
+
+### Architecture Principles
+
+1. **Separation of Concerns**
+   - UI package: Presentation only
+   - Frontend app: Logic and state
+
+2. **Global Accessibility**
+   - Use from any component
+   - No prop drilling
+   - No context nesting
+
+3. **Type Safety**
+   - Full TypeScript support
+   - Compile-time errors
+   - IntelliSense support
+
+4. **Developer Experience**
+   - Simple API
+   - Intuitive methods
+   - Clear documentation
+
+## File Structure
+
+```
+apps/frontend/
+├── lib/
+│   └── atoms/
+│       └── toast.atoms.ts          # State management
+├── hooks/
+│   ├── useGlobalToast.ts           # Main hook
+│   └── index.ts                    # Re-exports
+├── components/
+│   └── ToastProvider.tsx           # Provider component
+└── app/
+    └── providers.tsx               # Root providers
+
+packages/ui/
+└── src/
+    └── primitives/
+        └── toaster.tsx             # Sonner wrapper
+```
+
+## Dependencies
+
+### Frontend App
+
+- **jotai** - State management
+- **sonner** - Toast UI (via UI package)
+- **@project-template/ui** - Shared components
+
+### UI Package
+
+- **sonner** - Toast notification library
+- **react** - UI framework
+
+## Browser Support
+
+- ✅ Chrome/Edge (Chromium)
+- ✅ Firefox
+- ✅ Safari
+- ✅ Mobile browsers (iOS Safari, Chrome Mobile)
+
+## Accessibility
+
+- **ARIA labels** - Screen reader support
+- **Keyboard navigation** - Tab/Escape keys
+- **Focus management** - Proper focus handling
+- **Color contrast** - WCAG AA compliant
+- **Reduced motion** - Respects user preferences
+
+## Bundle Impact
+
+- **Jotai**: ~3KB gzipped
+- **Sonner**: ~10KB gzipped
+- **Total**: ~13KB additional to bundle
+- **Tree-shaking**: Unused code removed
+
+## Testing Strategy
+
+### Unit Tests
+
+Test the hook and atoms:
+
+```tsx
+import { renderHook, act } from "@testing-library/react";
+import { Provider } from "jotai";
+import { useGlobalToast } from "./useGlobalToast";
+
+test("triggers success toast", () => {
+  const { result } = renderHook(() => useGlobalToast(), {
+    wrapper: Provider,
+  });
+
+  act(() => {
+    result.current.success("Test");
+  });
+
+  // Assert toast was triggered
+});
+```
+
+### Integration Tests
+
+Test the full flow with a provider:
+
+```tsx
+import { render, screen } from "@testing-library/react";
+import { ToastProvider } from "./ToastProvider";
+
+test("displays toast when triggered", () => {
+  render(<ToastProvider />);
+  // Trigger toast and verify it appears
+});
+```
+
+## Future Enhancements
+
+Potential improvements:
+
+- **Promise-based API** - `await toast.success()`
+- **Toast queue control** - Max visible toasts
+- **Custom positioning** - Per-toast placement
+- **Rich content** - JSX in toasts
+- **Toast history** - View past notifications
+- **Persistence** - Survive page reloads

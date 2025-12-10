@@ -41,6 +41,7 @@ export * from './primitives/switch';
 export * from './primitives/table';
 export * from './primitives/tabs';
 export * from './primitives/textarea';
+export * from './primitives/toaster';
 export * from './primitives/toggle';
 export * from './primitives/toggle-group';
 export * from './primitives/tooltip';
