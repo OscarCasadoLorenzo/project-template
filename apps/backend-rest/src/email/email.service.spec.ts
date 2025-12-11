@@ -7,6 +7,12 @@ import {
 } from "./dto/email-options.dto";
 import { EmailService } from "./email.service";
 
+interface MockResendInstance {
+  emails: {
+    send: jest.Mock;
+  };
+}
+
 // Mock the Resend module
 jest.mock("resend", () => {
   return {
@@ -20,7 +26,7 @@ jest.mock("resend", () => {
 
 describe("EmailService", () => {
   let service: EmailService;
-  let mockResendInstance: any;
+  let mockResendInstance: MockResendInstance;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -29,8 +35,8 @@ describe("EmailService", () => {
         {
           provide: ConfigService,
           useValue: {
-            get: jest.fn((key: string, defaultValue?: any) => {
-              const config: Record<string, any> = {
+            get: jest.fn((key: string, defaultValue?: string | boolean) => {
+              const config: Record<string, string | boolean> = {
                 EMAIL_FROM: "test@example.com",
                 EMAIL_FROM_NAME: "Test App",
                 EMAIL_PREVIEW_MODE: false,
@@ -49,9 +55,10 @@ describe("EmailService", () => {
     service = module.get<EmailService>(EmailService);
 
     // Get the mocked Resend instance
-    const { Resend } = require("resend");
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { Resend } = require("resend") as { Resend: jest.Mock };
     mockResendInstance =
-      Resend.mock.results[Resend.mock.results.length - 1].value;
+      Resend.mock.results[Resend.mock.results.length - 1].value as MockResendInstance;
 
     jest.clearAllMocks();
   });
@@ -272,8 +279,8 @@ describe("EmailService", () => {
           {
             provide: ConfigService,
             useValue: {
-              get: jest.fn((key: string, defaultValue?: any) => {
-                const config: Record<string, any> = {
+              get: jest.fn((key: string, defaultValue?: string | boolean) => {
+                const config: Record<string, string | boolean> = {
                   EMAIL_FROM: "test@example.com",
                   EMAIL_FROM_NAME: "Test App",
                   EMAIL_PREVIEW_MODE: true,
@@ -290,9 +297,10 @@ describe("EmailService", () => {
       }).compile();
 
       const previewService = previewModule.get<EmailService>(EmailService);
-      const { Resend } = require("resend");
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { Resend } = require("resend") as { Resend: jest.Mock };
       const previewMock =
-        Resend.mock.results[Resend.mock.results.length - 1].value;
+        Resend.mock.results[Resend.mock.results.length - 1].value as MockResendInstance;
 
       const dto: SendPasswordRecoveryEmailDto = {
         to: "user@example.com",
