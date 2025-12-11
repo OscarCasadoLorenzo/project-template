@@ -1,8 +1,3 @@
 {
-  "extends": ["../../packages/config/eslint/nestjs.js"],
-  "parserOptions": {
-    "project": "./tsconfig.json",
-    "tsconfigRootDir": "./",
-    "sourceType": "module"
-  }
+  "extends": ["../../packages/config/eslint/nestjs.js"]
 }
