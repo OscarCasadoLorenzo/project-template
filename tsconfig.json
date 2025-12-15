@@ -22,7 +22,8 @@
     "backend/**/*",
     "renderer/**/*",
     "apps/frontend/services",
-    "apps/frontend/hooks"
+    "apps/frontend/hooks",
+    "apps/backend-rest/**/*"
   ],
   "exclude": ["node_modules", "dist", "build"]
 }
