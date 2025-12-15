@@ -2,7 +2,7 @@
   "root": true,
   "extends": ["../../packages/config/eslint/nestjs.js"],
   "parserOptions": {
-    "project": "tsconfig.json",
-    "tsconfigRootDir": "apps/backend-rest"
+    "project": "./tsconfig.json",
+    "tsconfigRootDir": "."
   }
 }
