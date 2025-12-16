@@ -1,0 +1,137 @@
+# Modal System
+
+A production-grade, type-safe modal management system built on **shadcn/ui Dialog (Radix primitives)** for Next.js applications.
+
+## Overview
+
+The modal system provides a centralized, hook-based approach to managing modals across your application. It eliminates the need for local state management and provides a clean API for opening, closing, and managing multiple modals programmatically.
+
+## Key Features
+
+- ✅ **Built on Radix Dialog primitives** with full accessibility (ARIA attributes, keyboard navigation)
+- ✅ **Hook-based API** - no HOCs or complex setup required
+- ✅ **TypeScript-first** with complete type safety for props
+- ✅ **SSR-safe** and Next.js App Router compatible
+- ✅ **Modal stacking** - support for multiple concurrent modals
+- ✅ **Programmatic control** - open/close modals from anywhere
+- ✅ **Type-safe props** - pass props to modal components with full type checking
+- ✅ **Flexible content** - use ReactNode or Component-based modals
+- ✅ **Customizable behavior** - control dismissibility, close buttons, and more
+- ✅ **Lifecycle callbacks** - execute logic when modals open/close
+
+## Architecture
+
+All UI, styling, and UX concerns live in the `@project-template/ui` package. The frontend app only consumes the modal API without owning presentation logic.
+
+```
+packages/ui/src/components/modal/
+  ├── ModalProvider.tsx      # Context provider for modal state
+  ├── ModalRoot.tsx          # Renders all active modals
+  ├── ConfigurableModal.tsx  # Individual modal renderer
+  ├── useModal.ts            # Hook API for consuming modals
+  ├── types.ts               # TypeScript definitions
+  └── index.ts               # Public API exports
+```
+
+## Main Components
+
+### ModalProvider
+
+The context provider that manages modal state across your application. Must wrap your app at the root level.
+
+```tsx
+import { ModalProvider } from "@project-template/ui";
+
+export function Providers({ children }) {
+  return <ModalProvider>{children}</ModalProvider>;
+}
+```
+
+### ModalRoot
+
+The component that renders all active modals. Should be placed at the end of your provider tree.
+
+```tsx
+import { ModalRoot } from "@project-template/ui";
+
+export function Providers({ children }) {
+  return (
+    <ModalProvider>
+      {children}
+      <ModalRoot />
+    </ModalProvider>
+  );
+}
+```
+
+### useModal Hook
+
+The primary API for interacting with modals. Provides methods to open, close, and manage modals.
+
+```tsx
+import { useModal } from "@project-template/ui";
+
+function MyComponent() {
+  const { openModal, closeModal, closeAllModals, replaceModal } = useModal();
+
+  // Use modal methods...
+}
+```
+
+## Quick Start
+
+```tsx
+import { useModal } from "@project-template/ui";
+
+function MyComponent() {
+  const { openModal } = useModal();
+
+  const handleClick = () => {
+    openModal({
+      id: "my-modal",
+      content: (
+        <div>
+          <h2>Hello World</h2>
+          <p>This is a simple modal</p>
+        </div>
+      ),
+    });
+  };
+
+  return <button onClick={handleClick}>Open Modal</button>;
+}
+```
+
+## When to Use Modals
+
+**Good use cases:**
+
+- Confirmation dialogs (delete, leave page, etc.)
+- Forms that require focused user input
+- Displaying detailed information without navigation
+- Multi-step wizards or flows
+- Critical alerts requiring immediate attention
+
+**Avoid using modals for:**
+
+- Large amounts of content (consider a new page)
+- Primary navigation
+- Passive notifications (use toast instead)
+- Content that users need to reference alongside other content
+
+## Accessibility
+
+The modal system is built on Radix UI primitives and includes:
+
+- **Keyboard navigation** - ESC to close, Tab for focus management
+- **Focus trapping** - focus stays within modal
+- **ARIA attributes** - proper role, aria-labelledby, aria-describedby
+- **Screen reader support** - announces modal state changes
+- **Backdrop click** - configurable dismissible behavior
+
+## Next Steps
+
+- [Getting Started](/packages/modal/getting-started) - Set up the modal system in your app
+- [Usage Examples](/packages/modal/usage) - Learn different patterns and use cases
+- [API Reference](/packages/modal/api-reference) - Complete API documentation
+- [Components](/packages/modal/components) - Detailed component documentation

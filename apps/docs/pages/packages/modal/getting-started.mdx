@@ -1,0 +1,378 @@
+# Getting Started
+
+This guide will help you set up and use the modal system in your Next.js application.
+
+## Prerequisites
+
+- Next.js 13+ with App Router
+- React 18+
+- The `@project-template/ui` package installed
+
+## Installation
+
+The modal system is already included in the `@project-template/ui` package. No additional installation is required.
+
+## Setup
+
+### Step 1: Add ModalProvider to Your App
+
+The modal system requires a context provider to manage state. Add it to your root layout or providers file.
+
+```tsx
+import { ModalProvider, ModalRoot } from "@project-template/ui";
+import { ReactNode } from "react";
+
+export function Providers({ children }: { children: ReactNode }) {
+  return (
+    <ModalProvider>
+      {children}
+      <ModalRoot />
+    </ModalProvider>
+  );
+}
+```
+
+**Important:**
+
+- `ModalProvider` wraps your app and provides the modal context
+- `ModalRoot` renders the actual modals and should be placed **at the end** of your provider tree
+
+### Step 2: Use in Your Layout
+
+Import and use the Providers component in your root layout:
+
+```tsx
+import { Providers } from "../providers";
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  );
+}
+```
+
+## Basic Usage
+
+### Opening a Simple Modal
+
+Use the `useModal` hook to open a modal with inline content:
+
+```tsx
+import { useModal } from "@project-template/ui";
+
+function MyComponent() {
+  const { openModal } = useModal();
+
+  const handleOpen = () => {
+    openModal({
+      id: "welcome-modal",
+      content: (
+        <div className="p-6">
+          <h2 className="text-xl font-bold">Welcome!</h2>
+          <p className="text-muted-foreground mt-2">
+            This is your first modal.
+          </p>
+        </div>
+      ),
+    });
+  };
+
+  return <button onClick={handleOpen}>Open Modal</button>;
+}
+```
+
+### Closing a Modal
+
+Close modals programmatically using their ID:
+
+```tsx
+import { useModal } from "@project-template/ui";
+
+function MyModalContent() {
+  const { closeModal } = useModal();
+
+  return (
+    <div className="p-6">
+      <h2>Modal Title</h2>
+      <button onClick={() => closeModal("welcome-modal")}>Close</button>
+    </div>
+  );
+}
+```
+
+### Using shadcn/ui Dialog Components
+
+The modal system is built on shadcn/ui Dialog components. You can use all Dialog subcomponents for better structure:
+
+```tsx
+import {
+  useModal,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  Button,
+} from "@project-template/ui";
+
+function MyComponent() {
+  const { openModal, closeModal } = useModal();
+
+  const handleOpen = () => {
+    openModal({
+      id: "structured-modal",
+      content: (
+        <>
+          <DialogHeader>
+            <DialogTitle>Structured Modal</DialogTitle>
+            <DialogDescription>
+              This modal uses shadcn/ui Dialog components for better
+              organization.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <p>Your content goes here...</p>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => closeModal("structured-modal")}
+            >
+              Cancel
+            </Button>
+            <Button onClick={() => closeModal("structured-modal")}>
+              Confirm
+            </Button>
+          </DialogFooter>
+        </>
+      ),
+    });
+  };
+
+  return <button onClick={handleOpen}>Open Structured Modal</button>;
+}
+```
+
+## Component-Based Modals
+
+For reusable modals, create separate components:
+
+```tsx
+import {
+  useModal,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  Button,
+} from "@project-template/ui";
+
+// Define the modal component
+interface ConfirmModalProps {
+  message: string;
+  onConfirm: () => void;
+}
+
+function ConfirmModal({ message, onConfirm }: ConfirmModalProps) {
+  const { closeModal } = useModal();
+  const modalId = "confirm-modal";
+
+  const handleConfirm = () => {
+    onConfirm();
+    closeModal(modalId);
+  };
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>Confirm Action</DialogTitle>
+        <DialogDescription>{message}</DialogDescription>
+      </DialogHeader>
+      <DialogFooter>
+        <Button variant="outline" onClick={() => closeModal(modalId)}>
+          Cancel
+        </Button>
+        <Button onClick={handleConfirm}>Confirm</Button>
+      </DialogFooter>
+    </>
+  );
+}
+
+// Use the modal component
+function MyComponent() {
+  const { openModal } = useModal();
+
+  const showConfirmation = () => {
+    openModal({
+      id: "confirm-modal",
+      content: ConfirmModal,
+      props: {
+        message: "Are you sure you want to proceed?",
+        onConfirm: () => console.log("Confirmed!"),
+      },
+    });
+  };
+
+  return <button onClick={showConfirmation}>Delete Item</button>;
+}
+```
+
+## Customization Options
+
+### Non-Dismissible Modal
+
+Prevent users from closing the modal with ESC or clicking the backdrop:
+
+```tsx
+openModal({
+  id: "critical-modal",
+  content: <div>This modal cannot be dismissed</div>,
+  dismissible: false,
+  showCloseButton: false,
+});
+```
+
+### Custom Styling
+
+Apply custom classes to the dialog container:
+
+```tsx
+openModal({
+  id: "wide-modal",
+  content: <div>Wide content...</div>,
+  className: "max-w-4xl", // Custom width
+});
+```
+
+### onClose Callback
+
+Execute code when the modal closes:
+
+```tsx
+openModal({
+  id: "my-modal",
+  content: <div>Content</div>,
+  onClose: () => {
+    console.log("Modal closed - cleanup logic here");
+  },
+});
+```
+
+## Common Patterns
+
+### Confirmation Dialog
+
+```tsx
+const { openModal } = useModal();
+
+const confirmDelete = () => {
+  openModal({
+    id: "delete-confirm",
+    content: ConfirmDialog,
+    props: {
+      title: "Delete Item",
+      description: "This action cannot be undone.",
+      onConfirm: handleDelete,
+    },
+  });
+};
+```
+
+### Form Modal
+
+```tsx
+const { openModal } = useModal();
+
+const openUserForm = () => {
+  openModal({
+    id: "user-form",
+    content: UserFormModal,
+    props: {
+      onSubmit: async (data) => {
+        await saveUser(data);
+      },
+    },
+  });
+};
+```
+
+### Modal Stacking
+
+The system supports multiple modals open simultaneously:
+
+```tsx
+// Open first modal
+openModal({ id: "modal-1", content: <div>First Modal</div> });
+
+// Open second modal (stacks on top)
+openModal({ id: "modal-2", content: <div>Second Modal</div> });
+```
+
+## Troubleshooting
+
+### Error: "useModal must be used within a ModalProvider"
+
+**Solution:** Ensure `ModalProvider` wraps your app at the root level.
+
+```tsx
+// ❌ Wrong
+export default function App() {
+  return <MyComponent />; // No provider
+}
+
+// ✅ Correct
+export default function App() {
+  return (
+    <ModalProvider>
+      <MyComponent />
+      <ModalRoot />
+    </ModalProvider>
+  );
+}
+```
+
+### Modals Not Appearing
+
+**Solution:** Make sure `<ModalRoot />` is included in your provider tree.
+
+```tsx
+<ModalProvider>
+  {children}
+  <ModalRoot /> {/* Don't forget this! */}
+</ModalProvider>
+```
+
+### TypeScript Errors with Props
+
+**Solution:** Ensure your modal component props match the `props` you're passing:
+
+```tsx
+// ❌ Wrong - props don't match
+interface MyModalProps {
+  name: string;
+}
+
+openModal({
+  id: "test",
+  content: MyModal,
+  props: { username: "John" }, // TypeScript error!
+});
+
+// ✅ Correct
+openModal({
+  id: "test",
+  content: MyModal,
+  props: { name: "John" }, // Matches MyModalProps
+});
+```
+
+## Next Steps
+
+- [Usage Examples](/packages/modal/usage) - Learn advanced patterns
+- [API Reference](/packages/modal/api-reference) - Complete API documentation
+- [Components](/packages/modal/components) - Detailed component docs
