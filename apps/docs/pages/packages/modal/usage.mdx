@@ -1,0 +1,669 @@
+# Usage Examples
+
+Learn how to implement common modal patterns in your application.
+
+## Basic Examples
+
+### Simple Content Modal
+
+A basic modal with inline content:
+
+```tsx
+import { useModal } from "@project-template/ui";
+
+function WelcomeButton() {
+  const { openModal } = useModal();
+
+  return (
+    <button
+      onClick={() =>
+        openModal({
+          id: "welcome",
+          content: (
+            <div className="p-6">
+              <h2 className="text-2xl font-bold">Welcome!</h2>
+              <p className="text-muted-foreground mt-2">
+                Thank you for joining our platform.
+              </p>
+            </div>
+          ),
+        })
+      }
+    >
+      Show Welcome
+    </button>
+  );
+}
+```
+
+### Modal with Close Button
+
+A modal that can close itself:
+
+```tsx
+import { useModal, Button } from "@project-template/ui";
+
+function InfoModal() {
+  const { openModal, closeModal } = useModal();
+  const modalId = "info-modal";
+
+  return (
+    <button
+      onClick={() =>
+        openModal({
+          id: modalId,
+          content: (
+            <div className="p-6">
+              <h2 className="text-xl font-bold">Information</h2>
+              <p className="mt-4">Here's some important information.</p>
+              <Button onClick={() => closeModal(modalId)} className="mt-4">
+                Got it
+              </Button>
+            </div>
+          ),
+        })
+      }
+    >
+      Show Info
+    </button>
+  );
+}
+```
+
+## Advanced Patterns
+
+### Confirmation Dialog
+
+A reusable confirmation dialog component:
+
+```tsx
+import {
+  useModal,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  Button,
+} from "@project-template/ui";
+
+interface ConfirmDialogProps {
+  title: string;
+  description: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  variant?: "default" | "destructive";
+  onConfirm: () => void;
+}
+
+export function ConfirmDialog({
+  title,
+  description,
+  confirmLabel = "Confirm",
+  cancelLabel = "Cancel",
+  variant = "default",
+  onConfirm,
+}: ConfirmDialogProps) {
+  const { closeModal } = useModal();
+  const modalId = "confirm-dialog";
+
+  const handleConfirm = () => {
+    onConfirm();
+    closeModal(modalId);
+  };
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>{title}</DialogTitle>
+        <DialogDescription>{description}</DialogDescription>
+      </DialogHeader>
+      <DialogFooter>
+        <Button variant="outline" onClick={() => closeModal(modalId)}>
+          {cancelLabel}
+        </Button>
+        <Button variant={variant} onClick={handleConfirm}>
+          {confirmLabel}
+        </Button>
+      </DialogFooter>
+    </>
+  );
+}
+
+// Usage
+function DeleteButton({
+  itemId,
+  itemName,
+}: {
+  itemId: string;
+  itemName: string;
+}) {
+  const { openModal } = useModal();
+
+  const handleDelete = async () => {
+    await fetch(`/api/items/${itemId}`, { method: "DELETE" });
+    console.log("Item deleted");
+  };
+
+  return (
+    <button
+      onClick={() =>
+        openModal({
+          id: "confirm-dialog",
+          content: ConfirmDialog,
+          props: {
+            title: "Delete Item",
+            description: `Are you sure you want to delete "${itemName}"? This action cannot be undone.`,
+            confirmLabel: "Delete",
+            variant: "destructive",
+            onConfirm: handleDelete,
+          },
+        })
+      }
+    >
+      Delete
+    </button>
+  );
+}
+```
+
+### Form Modal
+
+A modal containing a form with validation:
+
+```tsx
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import {
+  useModal,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  Button,
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+  Input,
+} from "@project-template/ui";
+
+const userFormSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  role: z.enum(["admin", "user", "guest"]),
+});
+
+type UserFormValues = z.infer<typeof userFormSchema>;
+
+interface UserFormModalProps {
+  initialData?: Partial<UserFormValues>;
+  onSubmit: (data: UserFormValues) => Promise<void>;
+}
+
+function UserFormModal({ initialData, onSubmit }: UserFormModalProps) {
+  const { closeModal } = useModal();
+  const modalId = "user-form";
+
+  const form = useForm<UserFormValues>({
+    resolver: zodResolver(userFormSchema),
+    defaultValues: initialData || {
+      name: "",
+      email: "",
+      role: "user",
+    },
+  });
+
+  const handleSubmit = async (data: UserFormValues) => {
+    try {
+      await onSubmit(data);
+      closeModal(modalId);
+    } catch (error) {
+      console.error("Form submission failed:", error);
+    }
+  };
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>{initialData ? "Edit User" : "Create User"}</DialogTitle>
+        <DialogDescription>
+          {initialData
+            ? "Update user information"
+            : "Add a new user to the system"}
+        </DialogDescription>
+      </DialogHeader>
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="John Doe" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input
+                    type="email"
+                    placeholder="john@example.com"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => closeModal(modalId)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? "Saving..." : "Save"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </Form>
+    </>
+  );
+}
+
+// Usage
+function UserManagement() {
+  const { openModal } = useModal();
+
+  const handleCreateUser = async (data: UserFormValues) => {
+    const response = await fetch("/api/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error("Failed to create user");
+  };
+
+  return (
+    <button
+      onClick={() =>
+        openModal({
+          id: "user-form",
+          content: UserFormModal,
+          props: { onSubmit: handleCreateUser },
+        })
+      }
+    >
+      Create User
+    </button>
+  );
+}
+```
+
+### Multi-Step Wizard
+
+A modal that transitions between multiple steps:
+
+```tsx
+import { useState } from "react";
+import {
+  useModal,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  Button,
+} from "@project-template/ui";
+
+interface WizardStep1Props {
+  onNext: (data: { email: string }) => void;
+}
+
+function WizardStep1({ onNext }: WizardStep1Props) {
+  const [email, setEmail] = useState("");
+  const { closeModal } = useModal();
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>Step 1: Email</DialogTitle>
+        <DialogDescription>Enter your email to continue</DialogDescription>
+      </DialogHeader>
+      <div className="py-4">
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full px-3 py-2 border rounded"
+          placeholder="you@example.com"
+        />
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={() => closeModal("wizard")}>
+          Cancel
+        </Button>
+        <Button onClick={() => onNext({ email })}>Next</Button>
+      </DialogFooter>
+    </>
+  );
+}
+
+interface WizardStep2Props {
+  email: string;
+  onBack: () => void;
+  onComplete: () => void;
+}
+
+function WizardStep2({ email, onBack, onComplete }: WizardStep2Props) {
+  const [name, setName] = useState("");
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>Step 2: Name</DialogTitle>
+        <DialogDescription>Email: {email}</DialogDescription>
+      </DialogHeader>
+      <div className="py-4">
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full px-3 py-2 border rounded"
+          placeholder="Your name"
+        />
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={onBack}>
+          Back
+        </Button>
+        <Button onClick={onComplete}>Complete</Button>
+      </DialogFooter>
+    </>
+  );
+}
+
+// Wizard container
+function OnboardingWizard() {
+  const { openModal, replaceModal, closeModal } = useModal();
+  const [wizardData, setWizardData] = useState({ email: "" });
+
+  const startWizard = () => {
+    openModal({
+      id: "wizard",
+      content: WizardStep1,
+      props: {
+        onNext: (data: { email: string }) => {
+          setWizardData(data);
+          replaceModal({
+            id: "wizard",
+            content: WizardStep2,
+            props: {
+              email: data.email,
+              onBack: () => {
+                replaceModal({
+                  id: "wizard",
+                  content: WizardStep1,
+                  props: {
+                    onNext: (data: { email: string }) => {
+                      setWizardData(data);
+                      // Continue to step 2...
+                    },
+                  },
+                });
+              },
+              onComplete: () => {
+                console.log("Wizard completed with:", wizardData);
+                closeModal("wizard");
+              },
+            },
+          });
+        },
+      },
+    });
+  };
+
+  return <button onClick={startWizard}>Start Onboarding</button>;
+}
+```
+
+### Alert Dialog
+
+A simple alert with a single action:
+
+```tsx
+import {
+  useModal,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  Button,
+} from "@project-template/ui";
+
+interface AlertDialogProps {
+  title: string;
+  message: string;
+  buttonLabel?: string;
+}
+
+function AlertDialog({ title, message, buttonLabel = "OK" }: AlertDialogProps) {
+  const { closeModal } = useModal();
+  const modalId = "alert-dialog";
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>{title}</DialogTitle>
+        <DialogDescription>{message}</DialogDescription>
+      </DialogHeader>
+      <DialogFooter>
+        <Button onClick={() => closeModal(modalId)}>{buttonLabel}</Button>
+      </DialogFooter>
+    </>
+  );
+}
+
+// Usage
+function NotificationButton() {
+  const { openModal } = useModal();
+
+  return (
+    <button
+      onClick={() =>
+        openModal({
+          id: "alert-dialog",
+          content: AlertDialog,
+          props: {
+            title: "Success",
+            message: "Your changes have been saved successfully.",
+            buttonLabel: "Great!",
+          },
+        })
+      }
+    >
+      Show Alert
+    </button>
+  );
+}
+```
+
+### Loading Modal
+
+A modal that shows while an async operation is in progress:
+
+```tsx
+import { useModal } from "@project-template/ui";
+import { Loader2 } from "lucide-react";
+
+function LoadingModal({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center p-8">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <p className="mt-4 text-sm text-muted-foreground">{message}</p>
+    </div>
+  );
+}
+
+// Usage
+function DataProcessor() {
+  const { openModal, closeModal } = useModal();
+
+  const processData = async () => {
+    // Open loading modal
+    openModal({
+      id: "loading",
+      content: LoadingModal,
+      props: { message: "Processing your data..." },
+      dismissible: false,
+      showCloseButton: false,
+    });
+
+    try {
+      await fetch("/api/process", { method: "POST" });
+      closeModal("loading");
+
+      // Show success
+      openModal({
+        id: "success",
+        content: <div className="p-6">Processing complete!</div>,
+      });
+    } catch (error) {
+      closeModal("loading");
+
+      // Show error
+      openModal({
+        id: "error",
+        content: <div className="p-6 text-destructive">Processing failed</div>,
+      });
+    }
+  };
+
+  return <button onClick={processData}>Process Data</button>;
+}
+```
+
+### Custom Size Modal
+
+A modal with custom width:
+
+```tsx
+import { useModal } from "@project-template/ui";
+
+function WideContentModal() {
+  const { openModal } = useModal();
+
+  return (
+    <button
+      onClick={() =>
+        openModal({
+          id: "wide-modal",
+          className: "max-w-4xl", // Custom width
+          content: (
+            <div className="p-6">
+              <h2 className="text-xl font-bold">Wide Content</h2>
+              <div className="grid grid-cols-3 gap-4 mt-4">
+                <div className="p-4 border rounded">Column 1</div>
+                <div className="p-4 border rounded">Column 2</div>
+                <div className="p-4 border rounded">Column 3</div>
+              </div>
+            </div>
+          ),
+        })
+      }
+    >
+      Show Wide Modal
+    </button>
+  );
+}
+```
+
+## Best Practices
+
+### 1. Use Descriptive IDs
+
+```tsx
+// ✅ Good - descriptive and unique
+openModal({ id: "delete-user-123", content: DeleteConfirm });
+openModal({ id: "edit-post-456", content: EditPostForm });
+
+// ❌ Bad - generic and may conflict
+openModal({ id: "modal", content: SomeModal });
+openModal({ id: "confirm", content: AnotherModal });
+```
+
+### 2. Type Your Props
+
+```tsx
+// ✅ Good - fully typed
+interface MyModalProps {
+  userId: string;
+  onSave: (data: UserData) => Promise<void>;
+}
+
+function MyModal({ userId, onSave }: MyModalProps) {
+  // TypeScript ensures type safety
+}
+
+openModal({
+  id: "my-modal",
+  content: MyModal,
+  props: { userId: "123", onSave: handleSave }, // Type-checked!
+});
+```
+
+### 3. Handle Cleanup with onClose
+
+```tsx
+openModal({
+  id: "data-modal",
+  content: DataModal,
+  onClose: () => {
+    // Reset state, clear cache, etc.
+    console.log("Modal closed - cleanup complete");
+  },
+});
+```
+
+### 4. Use shadcn/ui Components
+
+```tsx
+// ✅ Good - structured with Dialog components
+import {
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  Button,
+} from "@project-template/ui";
+
+<>
+  <DialogHeader>
+    <DialogTitle>Title</DialogTitle>
+  </DialogHeader>
+  <div>Content</div>
+  <DialogFooter>
+    <Button>Action</Button>
+  </DialogFooter>
+</>;
+```
+
+## Next Steps
+
+- [API Reference](/packages/modal/api-reference) - Complete API documentation
+- [Components](/packages/modal/components) - Component details

@@ -1,0 +1,584 @@
+# API Reference
+
+Complete API documentation for the modal system.
+
+## useModal Hook
+
+The primary API for interacting with modals. Must be used within a `ModalProvider`.
+
+### Import
+
+```tsx
+import { useModal } from "@project-template/ui";
+```
+
+### Usage
+
+```tsx
+function MyComponent() {
+  const { openModal, closeModal, closeAllModals, replaceModal, modals } =
+    useModal();
+
+  // Use modal methods...
+}
+```
+
+### Return Value
+
+The hook returns an object with the following properties:
+
+| Property         | Type                                            | Description                               |
+| ---------------- | ----------------------------------------------- | ----------------------------------------- |
+| `modals`         | `ModalState[]`                                  | Array of currently active modals          |
+| `openModal`      | `<TProps>(config: ModalConfig<TProps>) => void` | Opens a new modal                         |
+| `closeModal`     | `(id: string) => void`                          | Closes a specific modal by ID             |
+| `closeAllModals` | `() => void`                                    | Closes all open modals                    |
+| `replaceModal`   | `<TProps>(config: ModalConfig<TProps>) => void` | Replaces the current modal with a new one |
+
+### Methods
+
+#### openModal()
+
+Opens a new modal with the specified configuration.
+
+```tsx
+openModal<TProps>(config: ModalConfig<TProps>): void
+```
+
+**Parameters:**
+
+- `config`: Configuration object for the modal (see [ModalConfig](#modalconfig))
+
+**Example:**
+
+```tsx
+openModal({
+  id: "my-modal",
+  content: MyModalComponent,
+  props: { title: "Hello" },
+});
+```
+
+#### closeModal()
+
+Closes a specific modal by its ID.
+
+```tsx
+closeModal(id: string): void
+```
+
+**Parameters:**
+
+- `id`: Unique identifier of the modal to close
+
+**Example:**
+
+```tsx
+closeModal("my-modal");
+```
+
+#### closeAllModals()
+
+Closes all currently open modals.
+
+```tsx
+closeAllModals(): void
+```
+
+**Example:**
+
+```tsx
+closeAllModals();
+```
+
+#### replaceModal()
+
+Replaces the current modal with a new one. Useful for wizard flows.
+
+```tsx
+replaceModal<TProps>(config: ModalConfig<TProps>): void
+```
+
+**Parameters:**
+
+- `config`: Configuration object for the new modal (see [ModalConfig](#modalconfig))
+
+**Example:**
+
+```tsx
+replaceModal({
+  id: "wizard-step-2",
+  content: Step2Component,
+  props: { data: previousStepData },
+});
+```
+
+## ModalConfig
+
+Configuration object for opening a modal.
+
+### Type Definition
+
+```tsx
+interface ModalConfig<TProps = Record<string, unknown>> {
+  id: string;
+  content: ComponentType<TProps> | ReactNode;
+  props?: TProps;
+  className?: string;
+  showCloseButton?: boolean;
+  dismissible?: boolean;
+  onClose?: () => void;
+}
+```
+
+### Properties
+
+#### id (required)
+
+```tsx
+id: string;
+```
+
+Unique identifier for the modal. Used to close or reference the modal later.
+
+**Example:**
+
+```tsx
+id: "delete-user-123";
+```
+
+#### content (required)
+
+```tsx
+content: ComponentType<TProps> | ReactNode;
+```
+
+The content to display in the modal. Can be:
+
+- A React component (receives `props`)
+- A ReactNode (inline JSX)
+
+**Examples:**
+
+```tsx
+// Component
+content: MyModalComponent;
+
+// ReactNode
+content: <div>
+  <h2>Hello</h2>
+  <p>World</p>
+</div>;
+```
+
+#### props (optional)
+
+```tsx
+props?: TProps
+```
+
+Props to pass to the modal component. Only used when `content` is a component, not a ReactNode.
+
+**Example:**
+
+```tsx
+interface MyModalProps {
+  title: string;
+  onSave: () => void;
+}
+
+openModal({
+  id: "my-modal",
+  content: MyModal,
+  props: {
+    title: "Edit User",
+    onSave: handleSave,
+  },
+});
+```
+
+#### className (optional)
+
+```tsx
+className?: string
+```
+
+Custom CSS classes to apply to the dialog container. Useful for customizing size.
+
+**Default:** `undefined`
+
+**Example:**
+
+```tsx
+className: "max-w-4xl"; // Wide modal
+```
+
+#### showCloseButton (optional)
+
+```tsx
+showCloseButton?: boolean
+```
+
+Whether to show the X close button in the top-right corner.
+
+**Default:** `true`
+
+**Example:**
+
+```tsx
+showCloseButton: false; // Hide close button
+```
+
+#### dismissible (optional)
+
+```tsx
+dismissible?: boolean
+```
+
+Whether the modal can be dismissed by:
+
+- Pressing ESC key
+- Clicking the backdrop/overlay
+
+**Default:** `true`
+
+**Example:**
+
+```tsx
+dismissible: false; // Non-dismissible modal
+```
+
+#### onClose (optional)
+
+```tsx
+onClose?: () => void
+```
+
+Callback function executed when the modal closes (by any means).
+
+**Example:**
+
+```tsx
+onClose: () => {
+  console.log("Modal closed");
+  resetForm();
+};
+```
+
+## ModalState
+
+Represents the state of an active modal.
+
+### Type Definition
+
+```tsx
+interface ModalState {
+  id: string;
+  content: ComponentType<any> | ReactNode;
+  props?: Record<string, unknown>;
+  className?: string;
+  showCloseButton?: boolean;
+  dismissible?: boolean;
+  onClose?: () => void;
+}
+```
+
+### Usage
+
+Access the current modals array:
+
+```tsx
+const { modals } = useModal();
+
+console.log(modals.length); // Number of open modals
+console.log(modals[0]?.id); // ID of first modal
+```
+
+## Components
+
+### ModalProvider
+
+Context provider that manages modal state.
+
+#### Props
+
+```tsx
+interface ModalProviderProps {
+  children: ReactNode;
+}
+```
+
+#### Usage
+
+```tsx
+import { ModalProvider } from "@project-template/ui";
+
+export function Providers({ children }) {
+  return <ModalProvider>{children}</ModalProvider>;
+}
+```
+
+### ModalRoot
+
+Renders all active modals. Must be placed within a `ModalProvider`.
+
+#### Props
+
+None
+
+#### Usage
+
+```tsx
+import { ModalProvider, ModalRoot } from "@project-template/ui";
+
+export function Providers({ children }) {
+  return (
+    <ModalProvider>
+      {children}
+      <ModalRoot />
+    </ModalProvider>
+  );
+}
+```
+
+## shadcn/ui Dialog Components
+
+The modal system is built on shadcn/ui Dialog components. You can use these within your modal content:
+
+### DialogHeader
+
+Container for the modal header section.
+
+```tsx
+import { DialogHeader } from "@project-template/ui";
+
+<DialogHeader>
+  <DialogTitle>Title</DialogTitle>
+  <DialogDescription>Description</DialogDescription>
+</DialogHeader>;
+```
+
+### DialogTitle
+
+The modal title with proper accessibility attributes.
+
+```tsx
+import { DialogTitle } from "@project-template/ui";
+
+<DialogTitle>Edit User</DialogTitle>;
+```
+
+### DialogDescription
+
+Optional description text with muted styling.
+
+```tsx
+import { DialogDescription } from "@project-template/ui";
+
+<DialogDescription>Update the user's information below.</DialogDescription>;
+```
+
+### DialogFooter
+
+Container for action buttons at the bottom of the modal.
+
+```tsx
+import { DialogFooter, Button } from "@project-template/ui";
+
+<DialogFooter>
+  <Button variant="outline">Cancel</Button>
+  <Button>Save</Button>
+</DialogFooter>;
+```
+
+## TypeScript Types
+
+### Complete Type Definitions
+
+```tsx
+import { ComponentType, ReactNode } from "react";
+
+// Modal configuration
+interface ModalConfig<TProps = Record<string, unknown>> {
+  id: string;
+  content: ComponentType<TProps> | ReactNode;
+  props?: TProps;
+  className?: string;
+  showCloseButton?: boolean;
+  dismissible?: boolean;
+  onClose?: () => void;
+}
+
+// Modal state
+interface ModalState {
+  id: string;
+  content: ComponentType<any> | ReactNode;
+  props?: Record<string, unknown>;
+  className?: string;
+  showCloseButton?: boolean;
+  dismissible?: boolean;
+  onClose?: () => void;
+}
+
+// Modal context
+interface ModalContextValue {
+  modals: ModalState[];
+  openModal: <TProps = Record<string, unknown>>(
+    config: ModalConfig<TProps>
+  ) => void;
+  closeModal: (id: string) => void;
+  closeAllModals: () => void;
+  replaceModal: <TProps = Record<string, unknown>>(
+    config: ModalConfig<TProps>
+  ) => void;
+}
+```
+
+## Examples
+
+### Type-Safe Modal Component
+
+```tsx
+interface UserModalProps {
+  userId: string;
+  onSave: (data: UserData) => Promise<void>;
+}
+
+function UserModal({ userId, onSave }: UserModalProps) {
+  const { closeModal } = useModal();
+
+  // Component implementation...
+}
+
+// Usage with full type safety
+const { openModal } = useModal();
+
+openModal({
+  id: "user-modal",
+  content: UserModal,
+  props: {
+    userId: "123", // Type-checked
+    onSave: async (data) => {
+      // data is typed as UserData
+    },
+  },
+});
+```
+
+### Custom Hook for Modal Management
+
+```tsx
+function useConfirmDialog() {
+  const { openModal, closeModal } = useModal();
+
+  const confirm = (message: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      openModal({
+        id: "confirm-dialog",
+        content: ConfirmDialog,
+        props: {
+          message,
+          onConfirm: () => {
+            closeModal("confirm-dialog");
+            resolve(true);
+          },
+          onCancel: () => {
+            closeModal("confirm-dialog");
+            resolve(false);
+          },
+        },
+      });
+    });
+  };
+
+  return { confirm };
+}
+
+// Usage
+function MyComponent() {
+  const { confirm } = useConfirmDialog();
+
+  const handleDelete = async () => {
+    const confirmed = await confirm("Are you sure?");
+    if (confirmed) {
+      // Proceed with deletion
+    }
+  };
+}
+```
+
+## Error Handling
+
+### Common Errors
+
+#### "useModal must be used within a ModalProvider"
+
+**Cause:** Using `useModal` outside of a `ModalProvider`.
+
+**Solution:** Ensure `ModalProvider` wraps your app:
+
+```tsx
+// ✅ Correct
+<ModalProvider>
+  <App />
+</ModalProvider>
+
+// ❌ Wrong
+<App /> // No provider
+```
+
+#### TypeScript: Type mismatch in props
+
+**Cause:** Props passed to `openModal` don't match the component's prop types.
+
+**Solution:** Ensure prop types match exactly:
+
+```tsx
+interface MyModalProps {
+  name: string; // Must match exactly
+}
+
+openModal({
+  id: "test",
+  content: MyModal,
+  props: { name: "John" }, // ✅ Correct
+  // props: { username: 'John' }, // ❌ Wrong - type error
+});
+```
+
+## Performance Considerations
+
+### Modal Stacking
+
+The system supports multiple concurrent modals, but be mindful of UX:
+
+```tsx
+// ✅ Good - intentional stacking
+openModal({ id: "main-modal", content: MainModal });
+// User action triggers:
+openModal({ id: "confirm", content: ConfirmModal });
+
+// ❌ Avoid - too many modals
+openModal({ id: "modal-1", content: Modal1 });
+openModal({ id: "modal-2", content: Modal2 });
+openModal({ id: "modal-3", content: Modal3 });
+openModal({ id: "modal-4", content: Modal4 }); // Overwhelming
+```
+
+### Cleanup
+
+Always close modals when done to prevent memory leaks:
+
+```tsx
+useEffect(() => {
+  return () => {
+    closeAllModals(); // Cleanup on unmount
+  };
+}, []);
+```
+
+## Next Steps
+
+- [Getting Started](/packages/modal/getting-started) - Setup instructions
+- [Usage Examples](/packages/modal/usage) - Common patterns
+- [Components](/packages/modal/components) - Component details

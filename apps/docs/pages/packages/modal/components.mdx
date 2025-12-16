@@ -1,0 +1,498 @@
+# Components
+
+Detailed documentation for the modal system components.
+
+## Core Components
+
+### ModalProvider
+
+The root context provider that manages modal state across your application.
+
+#### Description
+
+`ModalProvider` creates a React context that stores the state of all active modals and provides methods to manipulate them. It must wrap your entire application or the portion where you want to use modals.
+
+#### Props
+
+```tsx
+interface ModalProviderProps {
+  children: ReactNode;
+}
+```
+
+| Prop       | Type        | Required | Description             |
+| ---------- | ----------- | -------- | ----------------------- |
+| `children` | `ReactNode` | Yes      | The app content to wrap |
+
+#### Usage
+
+```tsx
+import { ModalProvider } from "@project-template/ui";
+
+export function Providers({ children }: { children: ReactNode }) {
+  return <ModalProvider>{children}</ModalProvider>;
+}
+```
+
+#### Implementation Details
+
+- Uses React Context API for state management
+- Maintains an array of active modals in state
+- Provides `openModal`, `closeModal`, `closeAllModals`, and `replaceModal` methods
+- Thread-safe modal ID management
+
+---
+
+### ModalRoot
+
+The component that renders all active modals. Must be placed within a `ModalProvider`.
+
+#### Description
+
+`ModalRoot` listens to the modal context and renders each active modal using the `ConfigurableModal` component. It should be placed at the end of your provider tree to ensure modals appear on top of other content.
+
+#### Props
+
+None
+
+#### Usage
+
+```tsx
+import { ModalProvider, ModalRoot } from "@project-template/ui";
+
+export function Providers({ children }: { children: ReactNode }) {
+  return (
+    <ModalProvider>
+      {children}
+      <ModalRoot /> {/* Place at the end */}
+    </ModalProvider>
+  );
+}
+```
+
+#### Implementation Details
+
+- Reads modal state from `ModalContext`
+- Renders a `ConfigurableModal` for each active modal
+- Handles modal stacking automatically
+- Portal-based rendering for proper z-index layering
+
+---
+
+### ConfigurableModal
+
+Internal component that renders individual modal instances. Not typically used directly.
+
+#### Description
+
+`ConfigurableModal` is the renderer for individual modals. It handles:
+
+- Rendering modal content (component or ReactNode)
+- Passing props to modal components
+- Managing dismissible behavior
+- Showing/hiding the close button
+- Triggering onClose callbacks
+
+#### Props
+
+```tsx
+interface ConfigurableModalProps {
+  id: string;
+  content: ComponentType<any> | ReactNode;
+  props?: Record<string, unknown>;
+  className?: string;
+  showCloseButton?: boolean;
+  dismissible?: boolean;
+  onClose?: () => void;
+}
+```
+
+| Prop              | Type                         | Required | Default     | Description                 |
+| ----------------- | ---------------------------- | -------- | ----------- | --------------------------- |
+| `id`              | `string`                     | Yes      | -           | Unique modal identifier     |
+| `content`         | `ComponentType \| ReactNode` | Yes      | -           | Modal content               |
+| `props`           | `Record<string, unknown>`    | No       | `{}`        | Props for component content |
+| `className`       | `string`                     | No       | `undefined` | Custom dialog classes       |
+| `showCloseButton` | `boolean`                    | No       | `true`      | Show X button               |
+| `dismissible`     | `boolean`                    | No       | `true`      | Allow ESC/backdrop close    |
+| `onClose`         | `() => void`                 | No       | `undefined` | Close callback              |
+
+#### Internal Usage
+
+```tsx
+<ConfigurableModal
+  id={modal.id}
+  content={modal.content}
+  props={modal.props}
+  className={modal.className}
+  showCloseButton={modal.showCloseButton}
+  dismissible={modal.dismissible}
+  onClose={modal.onClose}
+/>
+```
+
+---
+
+## shadcn/ui Dialog Components
+
+The modal system uses shadcn/ui Dialog components built on Radix UI primitives.
+
+### Dialog
+
+The root dialog component. Managed automatically by the modal system.
+
+```tsx
+import { Dialog } from "@project-template/ui";
+
+<Dialog open={true} onOpenChange={handleClose}>
+  {/* Dialog content */}
+</Dialog>;
+```
+
+---
+
+### DialogContent
+
+The dialog container with overlay and focus management.
+
+```tsx
+import { DialogContent } from "@project-template/ui";
+
+<DialogContent className="sm:max-w-[425px]">
+  {/* Your content */}
+</DialogContent>;
+```
+
+#### Features
+
+- Focus trap
+- ESC key handling
+- Overlay backdrop
+- Responsive design
+- Accessible close button
+
+---
+
+### DialogHeader
+
+Semantic container for dialog title and description.
+
+```tsx
+import {
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@project-template/ui";
+
+<DialogHeader>
+  <DialogTitle>Edit Profile</DialogTitle>
+  <DialogDescription>
+    Make changes to your profile here. Click save when you're done.
+  </DialogDescription>
+</DialogHeader>;
+```
+
+#### Styling
+
+- Proper spacing between title and description
+- Accessible heading structure
+
+---
+
+### DialogTitle
+
+The modal title with proper ARIA attributes.
+
+```tsx
+import { DialogTitle } from "@project-template/ui";
+
+<DialogTitle>Are you absolutely sure?</DialogTitle>;
+```
+
+#### Accessibility
+
+- Automatically linked via `aria-labelledby`
+- Semantic `h2` heading by default
+
+---
+
+### DialogDescription
+
+Optional description text for additional context.
+
+```tsx
+import { DialogDescription } from "@project-template/ui";
+
+<DialogDescription>
+  This action cannot be undone. This will permanently delete your account and
+  remove your data from our servers.
+</DialogDescription>;
+```
+
+#### Accessibility
+
+- Automatically linked via `aria-describedby`
+- Muted text styling
+
+---
+
+### DialogFooter
+
+Container for action buttons at the bottom of the modal.
+
+```tsx
+import { DialogFooter, Button } from "@project-template/ui";
+
+<DialogFooter>
+  <Button variant="outline" onClick={onCancel}>
+    Cancel
+  </Button>
+  <Button onClick={onConfirm}>Confirm</Button>
+</DialogFooter>;
+```
+
+#### Features
+
+- Responsive layout (stacked on mobile, row on desktop)
+- Proper button spacing
+- Right-aligned on desktop
+
+---
+
+## useModal Hook
+
+The primary hook for interacting with modals.
+
+### Description
+
+`useModal` provides access to the modal context and all modal manipulation methods.
+
+### Returns
+
+```tsx
+interface ModalContextValue {
+  modals: ModalState[];
+  openModal: <TProps>(config: ModalConfig<TProps>) => void;
+  closeModal: (id: string) => void;
+  closeAllModals: () => void;
+  replaceModal: <TProps>(config: ModalConfig<TProps>) => void;
+}
+```
+
+### Usage
+
+```tsx
+import { useModal } from "@project-template/ui";
+
+function MyComponent() {
+  const { openModal, closeModal } = useModal();
+
+  const handleClick = () => {
+    openModal({
+      id: "my-modal",
+      content: <div>Content</div>,
+    });
+  };
+
+  return <button onClick={handleClick}>Open</button>;
+}
+```
+
+### Error Handling
+
+Throws an error if used outside of `ModalProvider`:
+
+```
+Error: useModal must be used within a ModalProvider
+```
+
+---
+
+## Complete Example
+
+Here's a complete example showing all components working together:
+
+```tsx
+// 1. Root Providers (app/providers.tsx)
+import { ModalProvider, ModalRoot } from "@project-template/ui";
+
+export function Providers({ children }: { children: ReactNode }) {
+  return (
+    <ModalProvider>
+      {children}
+      <ModalRoot />
+    </ModalProvider>
+  );
+}
+
+// 2. Modal Component (components/ConfirmDeleteModal.tsx)
+import {
+  useModal,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  Button,
+} from "@project-template/ui";
+
+interface ConfirmDeleteModalProps {
+  itemName: string;
+  onConfirm: () => Promise<void>;
+}
+
+export function ConfirmDeleteModal({
+  itemName,
+  onConfirm,
+}: ConfirmDeleteModalProps) {
+  const { closeModal } = useModal();
+  const modalId = "confirm-delete";
+
+  const handleConfirm = async () => {
+    await onConfirm();
+    closeModal(modalId);
+  };
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogDescription>
+          Are you sure you want to delete "{itemName}"? This action cannot be
+          undone.
+        </DialogDescription>
+      </DialogHeader>
+      <DialogFooter>
+        <Button variant="outline" onClick={() => closeModal(modalId)}>
+          Cancel
+        </Button>
+        <Button variant="destructive" onClick={handleConfirm}>
+          Delete
+        </Button>
+      </DialogFooter>
+    </>
+  );
+}
+
+// 3. Usage in Page Component (app/items/page.tsx)
+import { useModal } from "@project-template/ui";
+import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
+
+export default function ItemsPage() {
+  const { openModal } = useModal();
+
+  const handleDelete = async () => {
+    await fetch("/api/items/123", { method: "DELETE" });
+    console.log("Item deleted");
+  };
+
+  return (
+    <button
+      onClick={() =>
+        openModal({
+          id: "confirm-delete",
+          content: ConfirmDeleteModal,
+          props: {
+            itemName: "Important Document",
+            onConfirm: handleDelete,
+          },
+        })
+      }
+    >
+      Delete Item
+    </button>
+  );
+}
+```
+
+---
+
+## Component Architecture
+
+```
+ModalProvider (Context)
+    ├─ Your App
+    │   ├─ Pages
+    │   │   └─ useModal() → openModal()
+    │   └─ Components
+    │       └─ useModal() → closeModal()
+    └─ ModalRoot
+        └─ ConfigurableModal (for each active modal)
+            └─ Dialog
+                └─ DialogContent
+                    ├─ Your Modal Content
+                    │   ├─ DialogHeader
+                    │   │   ├─ DialogTitle
+                    │   │   └─ DialogDescription
+                    │   ├─ Form/Content
+                    │   └─ DialogFooter
+                    └─ Close Button (if enabled)
+```
+
+---
+
+## Best Practices
+
+### 1. Component Organization
+
+Create reusable modal components:
+
+```tsx
+// ✅ Good - reusable component
+export function UserFormModal({ userId, onSave }: UserFormModalProps) {
+  // Implementation
+}
+
+// Usage
+openModal({
+  id: "user-form",
+  content: UserFormModal,
+  props: { userId: "123", onSave: handleSave },
+});
+```
+
+### 2. Use Dialog Components
+
+Structure your modals with Dialog components:
+
+```tsx
+// ✅ Good - well structured
+<>
+  <DialogHeader>
+    <DialogTitle>Title</DialogTitle>
+    <DialogDescription>Description</DialogDescription>
+  </DialogHeader>
+  <div className="py-4">{/* Content */}</div>
+  <DialogFooter>
+    <Button>Action</Button>
+  </DialogFooter>
+</>
+
+// ❌ Less ideal - unstructured
+<div>
+  <h2>Title</h2>
+  <p>Description</p>
+  <div>{/* Content */}</div>
+  <button>Action</button>
+</div>
+```
+
+### 3. Accessibility
+
+Always include proper ARIA labels:
+
+```tsx
+<DialogHeader>
+  <DialogTitle>Delete Account</DialogTitle>
+  <DialogDescription>
+    This action is permanent and cannot be undone.
+  </DialogDescription>
+</DialogHeader>
+```
+
+---
+
+## Next Steps
+
+- [Getting Started](/packages/modal/getting-started) - Setup guide
+- [Usage Examples](/packages/modal/usage) - Common patterns
+- [API Reference](/packages/modal/api-reference) - Complete API docs

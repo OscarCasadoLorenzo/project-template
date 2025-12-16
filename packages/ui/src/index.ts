@@ -59,3 +59,14 @@ export type { PaginationProps } from './components/pagination';
 // Templates
 export * from './templates/Footer';
 export * from './templates/NavigationMenu';
+
+// Modal System
+export { ConfigurableModal, ModalProvider, ModalRoot, useModal } from './components/modal';
+export type {
+  ConfigurableModalProps,
+  ModalButtonConfig,
+  ModalConfig,
+  ModalContextValue,
+  ModalProviderProps,
+  ModalState,
+} from './components/modal';

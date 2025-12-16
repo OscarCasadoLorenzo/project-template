@@ -2,6 +2,7 @@
 
 import { ToastProvider } from "@/components/ToastProvider";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ModalProvider, ModalRoot } from "@project-template/ui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Provider as JotaiProvider } from "jotai";
@@ -24,9 +25,12 @@ export function Providers({ children }: { children: ReactNode }) {
     <JotaiProvider>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <ToastProvider />
-          {children}
-          <ReactQueryDevtools initialIsOpen={false} />
+          <ModalProvider>
+            <ToastProvider />
+            {children}
+            <ModalRoot />
+            <ReactQueryDevtools initialIsOpen={false} />
+          </ModalProvider>
         </AuthProvider>
       </QueryClientProvider>
     </JotaiProvider>
