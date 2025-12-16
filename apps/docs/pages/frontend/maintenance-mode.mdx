@@ -1,0 +1,359 @@
+# Maintenance Mode (Frontend)
+
+The frontend implements maintenance mode through Next.js middleware to redirect users to a maintenance page during downtime.
+
+## Overview
+
+When maintenance mode is enabled, the frontend redirects all users to `/[locale]/maintenance` **except**:
+
+- Static assets (`/_next/*`, `/favicon.ico`)
+- API routes (`/api/*`)
+- Health endpoints (`/health`)
+- The maintenance page itself
+
+## Quick Start
+
+### Enable Maintenance Mode
+
+Set the environment variable in `.env.local`:
+
+```bash
+MAINTENANCE_ENABLED=true
+```
+
+**Restart the Next.js dev server** for the change to take effect.
+
+### Disable Maintenance Mode
+
+```bash
+MAINTENANCE_ENABLED=false
+# or remove the variable
+```
+
+## Implementation
+
+### 1. Middleware
+
+**Location:** `middleware.ts`
+
+The maintenance check is integrated into the Next.js middleware before i18n processing:
+
+```typescript
+import createMiddleware from "next-intl/middleware";
+import { NextRequest, NextResponse } from "next/server";
+
+export default function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  const skipPaths = [
+    "/_next",
+    "/favicon.ico",
+    "/api",
+    "/health",
+    "/maintenance",
+  ];
+  const shouldSkip =
+    skipPaths.some((path) => pathname.startsWith(path)) ||
+    pathname.includes("/maintenance");
+
+  if (!shouldSkip) {
+    const isMaintenanceEnabled = process.env.MAINTENANCE_ENABLED === "true";
+
+    if (isMaintenanceEnabled) {
+      const locale = pathname.split("/")[1];
+      const validLocale = locales.includes(locale) ? locale : defaultLocale;
+
+      return NextResponse.redirect(
+        new URL(`/${validLocale}/maintenance`, request.url)
+      );
+    }
+  }
+
+  return intlMiddleware(request);
+}
+```
+
+### 2. Maintenance Page
+
+**Location:** `app/[lang]/maintenance/page.tsx`
+
+A locale-aware maintenance page with professional design:
+
+```tsx
+"use client";
+
+import { useTranslations } from "next-intl";
+
+export default function MaintenancePage() {
+  const t = useTranslations();
+
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="max-w-md space-y-8 text-center">
+        <h1 className="text-4xl font-bold">{t("maintenance.title")}</h1>
+        <p className="text-lg">{t("maintenance.message")}</p>
+      </div>
+    </div>
+  );
+}
+```
+
+### 3. Translations
+
+**Location:** `i18n/dictionaries/[locale].json`
+
+**English (`en.json`):**
+
+```json
+{
+  "maintenance": {
+    "title": "Under Maintenance",
+    "message": "System is currently under maintenance. Please try again later.",
+    "description": "We apologize for any inconvenience. Our team is working to restore service as quickly as possible.",
+    "support": "If you need immediate assistance, please contact support."
+  }
+}
+```
+
+**Spanish (`es.json`):**
+
+```json
+{
+  "maintenance": {
+    "title": "En Mantenimiento",
+    "message": "El sistema está actualmente en mantenimiento. Por favor, inténtelo de nuevo más tarde.",
+    "description": "Pedimos disculpas por las molestias. Nuestro equipo está trabajando para restaurar el servicio lo más rápido posible.",
+    "support": "Si necesita asistencia inmediata, por favor contacte con soporte."
+  }
+}
+```
+
+## Features
+
+### Locale-Aware
+
+The maintenance page automatically displays in the user's selected language:
+
+- `http://localhost:3000/en/login` → `http://localhost:3000/en/maintenance` (English)
+- `http://localhost:3000/es/dashboard` → `http://localhost:3000/es/maintenance` (Spanish)
+
+### SEO Protection
+
+The maintenance page includes proper meta tags:
+
+```tsx
+export const metadata = {
+  title: "Under Maintenance - Project Template",
+  description: "System is currently under maintenance",
+  robots: "noindex, nofollow", // Prevents search engine indexing
+};
+```
+
+### Responsive Design
+
+The page is fully responsive and works on all screen sizes:
+
+```tsx
+<div className="flex min-h-screen items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
+  <div className="w-full max-w-md space-y-8 text-center">{/* Content */}</div>
+</div>
+```
+
+## Testing
+
+### Unit Tests
+
+**Location:** `__tests__/middleware.test.ts`
+
+The middleware logic has comprehensive unit tests:
+
+```bash
+npm test -- __tests__/middleware.test.ts
+```
+
+**Test scenarios:**
+
+- ✅ Environment variable validation
+- ✅ Path checking logic (skip paths)
+- ✅ Locale extraction from pathname
+- ✅ Maintenance URL construction
+- ✅ Complete integration flow
+
+### Manual Testing
+
+1. **Enable maintenance mode:**
+
+   ```bash
+   echo "MAINTENANCE_ENABLED=true" >> .env.local
+   ```
+
+2. **Restart dev server:**
+
+   ```bash
+   npm run dev
+   ```
+
+3. **Test redirects:**
+
+   ```bash
+   # Should redirect to /en/maintenance
+   curl -I http://localhost:3000/en/login
+
+   # Should redirect to /es/maintenance
+   curl -I http://localhost:3000/es/dashboard
+
+   # Should NOT redirect (maintenance page)
+   curl -I http://localhost:3000/en/maintenance
+   ```
+
+## Customization
+
+### Custom Maintenance Message
+
+Update the translations in your locale files:
+
+```json
+{
+  "maintenance": {
+    "title": "Scheduled Maintenance",
+    "message": "We're performing scheduled maintenance. Expected completion: 2:00 PM EST.",
+    "description": "Thank you for your patience.",
+    "support": "Contact support@example.com for urgent matters."
+  }
+}
+```
+
+### Custom Design
+
+Modify `app/[lang]/maintenance/page.tsx` to match your brand:
+
+```tsx
+export default function MaintenancePage() {
+  const t = useTranslations();
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
+      <div className="max-w-md rounded-lg bg-white p-8 shadow-xl">
+        {/* Your custom design */}
+      </div>
+    </div>
+  );
+}
+```
+
+### Add ETA (Estimated Time)
+
+```json
+{
+  "maintenance": {
+    "eta": "Estimated completion: {time}",
+    "etaUnknown": "We'll be back as soon as possible"
+  }
+}
+```
+
+```tsx
+export default function MaintenancePage() {
+  const t = useTranslations();
+  const eta = "2:00 PM EST"; // Could come from an API
+
+  return (
+    <div>
+      {/* ... */}
+      <p>{t("maintenance.eta", { time: eta })}</p>
+    </div>
+  );
+}
+```
+
+## Best Practices
+
+### 1. Test in Development First
+
+Always test maintenance mode locally before enabling in production:
+
+```bash
+# Local testing
+MAINTENANCE_ENABLED=true npm run dev
+```
+
+### 2. Clear Communication
+
+Update your status page or social media **before** enabling maintenance mode.
+
+### 3. Minimize Downtime
+
+Plan maintenance during low-traffic periods (e.g., late night, weekends).
+
+### 4. Monitor After Disabling
+
+After disabling maintenance mode, monitor your application to ensure everything works correctly.
+
+## Troubleshooting
+
+### Not redirecting to maintenance page
+
+Check:
+
+1. Environment variable is exact string `"true"` (case-sensitive)
+2. Dev server was restarted after setting variable
+3. Browser cache cleared (try incognito mode)
+4. Path is not in skip list
+
+```bash
+# Debug middleware
+console.log("MAINTENANCE_ENABLED:", process.env.MAINTENANCE_ENABLED);
+console.log("Pathname:", pathname);
+```
+
+### Redirect loop
+
+Ensure the maintenance page itself is in the skip paths:
+
+```typescript
+const skipPaths = [..., "/maintenance"];
+// AND
+|| pathname.includes("/maintenance")
+```
+
+### Translations not showing
+
+Verify:
+
+1. Page has `"use client"` directive
+2. Translations exist in both `en.json` and `es.json`
+3. Translation keys match exactly: `t("maintenance.title")`
+
+## Deployment
+
+### Vercel
+
+```bash
+# Vercel dashboard: Settings > Environment Variables
+MAINTENANCE_ENABLED=true
+```
+
+Changes apply immediately to new requests (no redeploy needed).
+
+### Netlify
+
+```bash
+# Netlify dashboard: Site settings > Environment variables
+MAINTENANCE_ENABLED=true
+```
+
+### Docker
+
+```yaml
+# docker-compose.yml
+services:
+  frontend:
+    environment:
+      - MAINTENANCE_ENABLED=true
+```
+
+## Related Documentation
+
+- [Backend Maintenance Mode](/backend/maintenance-mode)
+- [Internationalization](/frontend/i18n)
+- [Middleware Guide](/frontend/architecture#middleware)

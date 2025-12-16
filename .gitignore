@@ -96,6 +96,9 @@ jspm_packages/
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
+# TypeScript incremental build cache
+*.tsbuildinfo
+
 # Electron
 release/
 app/dist/

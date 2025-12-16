@@ -38,6 +38,12 @@
     "unauthorized": "No tienes permiso para acceder a esta página.",
     "unauthorizedWithRole": "Tu rol ({role}) no tiene permiso para acceder a esta página."
   },
+  "maintenance": {
+    "title": "En Mantenimiento",
+    "message": "El sistema está actualmente en mantenimiento. Por favor, inténtelo de nuevo más tarde.",
+    "description": "Pedimos disculpas por las molestias. Nuestro equipo está trabajando para restaurar el servicio lo más rápido posible.",
+    "support": "Si necesita asistencia inmediata, por favor contacte con soporte."
+  },
   "admin": {
     "title": "Gestión de usuarios",
     "description": "Gestionar roles y permisos de usuarios",

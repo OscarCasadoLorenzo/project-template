@@ -1,0 +1,322 @@
+# Maintenance Mode (Backend)
+
+The backend implements a global maintenance mode using NestJS guards to temporarily block API access during maintenance windows.
+
+## Overview
+
+When maintenance mode is enabled, the backend returns `503 Service Unavailable` for all requests **except**:
+
+- Health check endpoints (`/ping`, `/health`, `/api/health`, `/healthz`)
+- Routes decorated with `@BypassMaintenance()`
+
+## Quick Start
+
+### Enable Maintenance Mode
+
+Set the environment variable:
+
+```bash
+MAINTENANCE_ENABLED=true
+```
+
+**No application restart required!** Changes take effect on the next request.
+
+### Disable Maintenance Mode
+
+```bash
+MAINTENANCE_ENABLED=false
+# or simply remove the variable
+```
+
+## Response Format
+
+**503 Service Unavailable Response:**
+
+```json
+{
+  "statusCode": 503,
+  "error": "Service Unavailable",
+  "message": "System is currently under maintenance. Please try again later."
+}
+```
+
+## Implementation
+
+### 1. Maintenance Guard
+
+**Location:** `src/common/guards/maintenance.guard.ts`
+
+The `MaintenanceGuard` is registered globally in `app.module.ts` and intercepts all incoming requests:
+
+```typescript
+import { MaintenanceGuard } from "./common/guards/maintenance.guard";
+import { APP_GUARD } from "@nestjs/core";
+
+@Module({
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: MaintenanceGuard,
+    },
+  ],
+})
+export class AppModule {}
+```
+
+**How it works:**
+
+1. Checks if `MAINTENANCE_ENABLED=true`
+2. If enabled, checks if route has `@BypassMaintenance()` decorator
+3. If no decorator, checks if path is a health check endpoint
+4. If none of the above, throws `503 Service Unavailable`
+
+### 2. Bypass Decorator
+
+**Location:** `src/common/decorators/bypass-maintenance.decorator.ts`
+
+Use `@BypassMaintenance()` to exempt specific routes from maintenance mode:
+
+```typescript
+import { BypassMaintenance } from "./common/decorators/bypass-maintenance.decorator";
+
+@Controller("webhooks")
+export class WebhooksController {
+  @Post("stripe")
+  @BypassMaintenance() // This endpoint works during maintenance
+  handleStripeWebhook(@Body() payload: any) {
+    // Process webhook
+  }
+
+  @Post("github")
+  @BypassMaintenance() // GitHub webhooks work during maintenance
+  handleGithubWebhook(@Body() payload: any) {
+    // Process webhook
+  }
+}
+```
+
+### 3. Health Endpoints
+
+**Location:** `src/health/health.controller.ts`
+
+The health check endpoint automatically bypasses maintenance mode:
+
+```typescript
+import { BypassMaintenance } from "../common/decorators/bypass-maintenance.decorator";
+
+@Controller()
+export class HealthController {
+  @Get("ping")
+  @BypassMaintenance()
+  ping() {
+    return { status: "ok" };
+  }
+}
+```
+
+**Test it:**
+
+```bash
+# Health endpoint always works
+curl http://localhost:3001/ping
+# Response: { "status": "ok" }
+
+# Regular endpoints return 503 during maintenance
+curl http://localhost:3001/api/users
+# Response: { "statusCode": 503, "error": "Service Unavailable", ... }
+```
+
+## Use Cases
+
+### Emergency Shutdown
+
+Quickly disable your API during incidents:
+
+```bash
+MAINTENANCE_ENABLED=true
+```
+
+### Planned Maintenance
+
+Schedule maintenance windows with advance notice to users.
+
+### Database Migrations
+
+Enable maintenance mode while running critical database migrations:
+
+```bash
+# Enable maintenance
+MAINTENANCE_ENABLED=true
+
+# Run migrations
+npx prisma migrate deploy
+
+# Disable maintenance
+MAINTENANCE_ENABLED=false
+```
+
+### Webhook Bypass
+
+Keep third-party webhooks working during maintenance:
+
+```typescript
+@Controller("api/webhooks")
+export class WebhooksController {
+  @Post("stripe")
+  @BypassMaintenance()
+  async handleStripe(@Body() payload: any) {
+    // Stripe webhooks continue to work
+  }
+}
+```
+
+## Testing
+
+### Unit Tests
+
+**Location:** `src/common/guards/maintenance.guard.spec.ts`
+
+The guard has comprehensive unit tests with 100% statement coverage:
+
+```bash
+npm test -- --testPathPattern="maintenance"
+```
+
+**Test scenarios:**
+
+- ✅ Allows all requests when `MAINTENANCE_ENABLED` is not set
+- ✅ Allows all requests when `MAINTENANCE_ENABLED=false`
+- ✅ Blocks regular requests with 503 when enabled
+- ✅ Allows routes with `@BypassMaintenance()` decorator
+- ✅ Allows health check endpoints (`/ping`, `/health`, `/healthz`)
+- ✅ Handles undefined/empty URLs gracefully
+- ✅ Case-sensitive environment variable check
+
+### Integration Testing
+
+Test maintenance mode in your e2e tests:
+
+```typescript
+describe("Maintenance Mode (e2e)", () => {
+  it("should block requests when maintenance enabled", async () => {
+    process.env.MAINTENANCE_ENABLED = "true";
+
+    const response = await request(app.getHttpServer())
+      .get("/api/users")
+      .expect(503);
+
+    expect(response.body.error).toBe("Service Unavailable");
+  });
+
+  it("should allow health checks during maintenance", async () => {
+    process.env.MAINTENANCE_ENABLED = "true";
+
+    await request(app.getHttpServer()).get("/ping").expect(200);
+  });
+});
+```
+
+## Best Practices
+
+### 1. Use for Legitimate Maintenance Only
+
+Don't abuse maintenance mode as a feature flag system. Use proper feature flag tools for that.
+
+### 2. Communicate with Users
+
+Announce maintenance windows in advance through:
+
+- Email notifications
+- In-app announcements
+- Status page updates
+
+### 3. Monitor Health Checks
+
+Ensure your monitoring systems can still reach `/ping` during maintenance:
+
+```yaml
+# Example Kubernetes liveness probe
+livenessProbe:
+  httpGet:
+    path: /ping
+    port: 3001
+  periodSeconds: 10
+```
+
+### 4. Test in Staging First
+
+Always verify maintenance mode works correctly in staging before enabling in production.
+
+### 5. Have a Rollback Plan
+
+Document the exact steps to quickly disable maintenance mode:
+
+```bash
+# Quick disable
+MAINTENANCE_ENABLED=false
+
+# Verify
+curl http://localhost:3001/api/users
+```
+
+## Troubleshooting
+
+### Health checks failing during maintenance
+
+Health checks should **never** fail. If they do:
+
+1. Verify `@BypassMaintenance()` is applied to health controller
+2. Check endpoint path matches: `/ping`, `/health`, `/api/health`, or `/healthz`
+3. Review application logs for errors
+
+### Maintenance mode not activating
+
+Check:
+
+1. Environment variable is exact string `"true"` (case-sensitive)
+2. Variable is available in runtime environment
+3. No caching issues
+
+```bash
+# Verify environment
+curl http://localhost:3001/ping  # Should return 200
+curl http://localhost:3001/api/users  # Should return 503
+```
+
+## Deployment
+
+### Environment Variables
+
+Add to your deployment platform:
+
+**Vercel:**
+
+```bash
+# Settings > Environment Variables
+MAINTENANCE_ENABLED=true
+```
+
+**Docker:**
+
+```yaml
+# docker-compose.yml
+environment:
+  - MAINTENANCE_ENABLED=true
+```
+
+**Kubernetes:**
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+data:
+  MAINTENANCE_ENABLED: "true"
+```
+
+## Related Documentation
+
+- [Frontend Maintenance Mode](/frontend/maintenance-mode)
+- [Common Module](/backend/common-module)
+- [Authentication](/backend/authentication)

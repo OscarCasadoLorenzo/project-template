@@ -1,5 +1,6 @@
 import { Controller, Get } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { BypassMaintenance } from "../common/decorators/bypass-maintenance.decorator";
 import { HealthService } from "./health.service";
 
 @ApiTags("health")
@@ -8,6 +9,7 @@ export class HealthController {
   constructor(private readonly healthService: HealthService) {}
 
   @Get("ping")
+  @BypassMaintenance()
   @ApiOperation({ summary: "Health check endpoint" })
   @ApiResponse({
     status: 200,
