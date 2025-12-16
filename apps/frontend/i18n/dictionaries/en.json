@@ -38,6 +38,12 @@
     "unauthorized": "You do not have permission to access this page.",
     "unauthorizedWithRole": "Your role ({role}) does not have permission to access this page."
   },
+  "maintenance": {
+    "title": "Under Maintenance",
+    "message": "System is currently under maintenance. Please try again later.",
+    "description": "We apologize for any inconvenience. Our team is working to restore service as quickly as possible.",
+    "support": "If you need immediate assistance, please contact support."
+  },
   "admin": {
     "title": "User Management",
     "description": "Manage user roles and permissions",
