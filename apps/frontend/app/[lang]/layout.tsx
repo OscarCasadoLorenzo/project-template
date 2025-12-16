@@ -1,4 +1,5 @@
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { ModalTriggerExample } from "@/components/ModalTriggerExample";
 import { Sidebar } from "@/components/sidebar";
 import { Locale, locales } from "@/i18n/config";
 import type { Metadata } from "next";
@@ -40,7 +41,8 @@ export default async function RootLayout({
             <div className="flex h-screen">
               <Sidebar />
               <div className="flex-1 flex flex-col">
-                <div className="border-b bg-white px-4 py-2 flex justify-end">
+                <div className="border-b bg-white px-4 py-2 flex justify-end items-center">
+                  <ModalTriggerExample />
                   <LanguageSwitcher currentLocale={lang} />
                 </div>
                 <main className="flex-1 overflow-y-auto bg-gray-50">
