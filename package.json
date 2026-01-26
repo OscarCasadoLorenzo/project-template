@@ -11,7 +11,7 @@
     "backend:build": "cd apps/backend-rest && pnpm run build",
     "dev": "turbo dev",
     "lint": "turbo lint",
-    "test": "turbo test -- --passWithNoTests",
+    "test": "turbo test",
     "coverage:merge": "tsx scripts/merge-coverage.ts",
     "coverage": "pnpm run test && pnpm run coverage:merge",
     "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' + && find . -name 'pnpm-lock.yaml' -type f -delete",
