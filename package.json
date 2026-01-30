@@ -11,9 +11,10 @@
     "backend:build": "cd apps/backend-rest && pnpm run build",
     "dev": "turbo dev",
     "lint": "turbo lint",
-    "test": "turbo test -- --passWithNoTests",
+    "test": "turbo test",
     "coverage:merge": "tsx scripts/merge-coverage.ts",
     "coverage": "pnpm run test && pnpm run coverage:merge",
+    "pre-push": "pnpm run lint && pnpm run test && pnpm run build",
     "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' + && find . -name 'pnpm-lock.yaml' -type f -delete",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "preinstall": "npx only-allow pnpm",
@@ -52,7 +53,33 @@
   "pnpm": {
     "overrides": {
       "react": "^18.3.1",
-      "react-dom": "^18.3.1"
+      "react-dom": "^18.3.1",
+      "@types/react": "^18.3.12",
+      "@types/react-dom": "^18.3.1"
+    },
+    "allowedDeprecatedVersions": {
+      "@types/react": "*",
+      "@types/react-dom": "*"
+    },
+    "peerDependencyRules": {
+      "allowAny": [
+        "react",
+        "react-dom"
+      ],
+      "ignoreMissing": [
+        "@types/react",
+        "@types/react-dom"
+      ]
+    },
+    "packageExtensions": {
+      "backend-cms": {
+        "dependencies": {
+          "react": "19.2.1",
+          "react-dom": "19.2.1",
+          "@types/react": "19.2.1",
+          "@types/react-dom": "19.2.1"
+        }
+      }
     }
   },
   "packageManager": "pnpm@9.14.4",
