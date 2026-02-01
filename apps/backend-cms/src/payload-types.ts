@@ -70,6 +70,7 @@ export interface Config {
     users: User
     media: Media
     positions: Position
+    skills: Skill
     'payload-kv': PayloadKv
     'payload-locked-documents': PayloadLockedDocument
     'payload-preferences': PayloadPreference
@@ -80,6 +81,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>
     media: MediaSelect<false> | MediaSelect<true>
     positions: PositionsSelect<false> | PositionsSelect<true>
+    skills: SkillsSelect<false> | SkillsSelect<true>
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>
     'payload-locked-documents':
       | PayloadLockedDocumentsSelect<false>
@@ -218,12 +220,7 @@ export interface Position {
   /**
    * Technologies and skills used in this role
    */
-  skills?:
-    | {
-        skill: string
-        id?: string | null
-      }[]
-    | null
+  skills?: (number | Skill)[] | null
   /**
    * Company logo or brand image
    */
@@ -245,6 +242,58 @@ export interface Position {
    * Company website URL
    */
   companyWebsite?: string | null
+  updatedAt: string
+  createdAt: string
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "skills".
+ */
+export interface Skill {
+  id: number
+  /**
+   * Skill name (e.g., "TypeScript", "Docker", "React")
+   */
+  name: string
+  /**
+   * Skill categories (can select multiple)
+   */
+  categories?:
+    | (
+        | 'frontend'
+        | 'backend'
+        | 'database'
+        | 'devops'
+        | 'cloud'
+        | 'mobile'
+        | 'testing'
+        | 'security'
+        | 'agile'
+        | 'tools'
+        | 'design'
+        | 'architecture'
+        | 'ai-ml'
+        | 'data-science'
+        | 'api'
+        | 'version-control'
+        | 'ci-cd'
+        | 'monitoring'
+        | 'performance'
+        | 'blockchain'
+      )[]
+    | null
+  /**
+   * Short description or notes about this skill
+   */
+  description?: string | null
+  /**
+   * Skill icon or logo (optional)
+   */
+  icon?: (number | null) | Media
+  /**
+   * Sort order within category (lower numbers appear first)
+   */
+  order?: number | null
   updatedAt: string
   createdAt: string
 }
@@ -283,6 +332,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'positions'
         value: number | Position
+      } | null)
+    | ({
+        relationTo: 'skills'
+        value: number | Skill
       } | null)
   globalSlug?: string | null
   user: {
@@ -379,12 +432,7 @@ export interface PositionsSelect<T extends boolean = true> {
   endDate?: T
   isCurrent?: T
   description?: T
-  skills?:
-    | T
-    | {
-        skill?: T
-        id?: T
-      }
+  skills?: T
   logo?: T
   order?: T
   highlights?:
@@ -394,6 +442,19 @@ export interface PositionsSelect<T extends boolean = true> {
         id?: T
       }
   companyWebsite?: T
+  updatedAt?: T
+  createdAt?: T
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "skills_select".
+ */
+export interface SkillsSelect<T extends boolean = true> {
+  name?: T
+  categories?: T
+  description?: T
+  icon?: T
+  order?: T
   updatedAt?: T
   createdAt?: T
 }
