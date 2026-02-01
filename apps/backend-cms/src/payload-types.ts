@@ -69,6 +69,7 @@ export interface Config {
   collections: {
     users: User
     media: Media
+    'blog-posts': BlogPost
     positions: Position
     skills: Skill
     'payload-kv': PayloadKv
@@ -80,6 +81,7 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>
     media: MediaSelect<false> | MediaSelect<true>
+    'blog-posts': BlogPostsSelect<false> | BlogPostsSelect<true>
     positions: PositionsSelect<false> | PositionsSelect<true>
     skills: SkillsSelect<false> | SkillsSelect<true>
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>
@@ -168,6 +170,71 @@ export interface Media {
   height?: number | null
   focalX?: number | null
   focalY?: number | null
+}
+/**
+ * Blog posts, articles, and case studies for your portfolio
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blog-posts".
+ */
+export interface BlogPost {
+  id: number
+  /**
+   * Blog post title (3-200 characters)
+   */
+  title: string
+  /**
+   * SEO-friendly URL slug (auto-generated from title if not provided, must be unique)
+   */
+  slug: string
+  /**
+   * Main blog post content with rich text formatting, images, and code blocks
+   */
+  content: {
+    root: {
+      type: string
+      children: {
+        type: any
+        version: number
+        [k: string]: unknown
+      }[]
+      direction: ('ltr' | 'rtl') | null
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | ''
+      indent: number
+      version: number
+    }
+    [k: string]: unknown
+  }
+  /**
+   * Short summary for previews and SEO (auto-generated from content if not provided, max 300 characters)
+   */
+  excerpt?: string | null
+  /**
+   * Featured image for the blog post
+   */
+  coverImage?: (number | null) | Media
+  /**
+   * Tags for categorization and filtering (e.g., "typescript", "react", "tutorial")
+   */
+  tags?: string[] | null
+  /**
+   * Publication status of the blog post
+   */
+  status: 'draft' | 'published' | 'archived'
+  /**
+   * Publication date (automatically set when status changes to published)
+   */
+  publishedAt?: string | null
+  /**
+   * Author of the blog post
+   */
+  author: number | User
+  /**
+   * Estimated reading time in minutes (auto-calculated from content)
+   */
+  readingTime?: number | null
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -330,6 +397,10 @@ export interface PayloadLockedDocument {
         value: number | Media
       } | null)
     | ({
+        relationTo: 'blog-posts'
+        value: number | BlogPost
+      } | null)
+    | ({
         relationTo: 'positions'
         value: number | Position
       } | null)
@@ -419,6 +490,24 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T
   focalX?: T
   focalY?: T
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blog-posts_select".
+ */
+export interface BlogPostsSelect<T extends boolean = true> {
+  title?: T
+  slug?: T
+  content?: T
+  excerpt?: T
+  coverImage?: T
+  tags?: T
+  status?: T
+  publishedAt?: T
+  author?: T
+  readingTime?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
