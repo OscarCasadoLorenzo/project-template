@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url'
 
 import { Media } from './collections/Media'
 import { Positions } from './collections/Positions'
+import { Skills } from './collections/Skills'
 import { Users } from './collections/Users'
 
 const filename = fileURLToPath(import.meta.url)
@@ -19,7 +20,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Positions],
+  collections: [Users, Media, Positions, Skills],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
