@@ -175,17 +175,12 @@ export const Positions: CollectionConfig = {
     },
     {
       name: 'skills',
-      type: 'array',
+      type: 'relationship',
+      relationTo: 'skills',
+      hasMany: true,
       admin: {
         description: 'Technologies and skills used in this role',
       },
-      fields: [
-        {
-          name: 'skill',
-          type: 'text',
-          required: true,
-        },
-      ],
     },
     {
       name: 'logo',
@@ -247,6 +242,42 @@ export const Positions: CollectionConfig = {
 
   // Hooks for additional logic
   hooks: {
+    beforeValidate: [
+      async ({ data, operation, req, originalDoc }) => {
+        // Validate unique order
+        if (operation === 'create' || operation === 'update') {
+          if (data?.order !== undefined && data.order !== null) {
+            const existingOrder = await req.payload.find({
+              collection: 'positions',
+              where: {
+                order: {
+                  equals: data.order,
+                },
+              },
+              limit: 1,
+            })
+
+            // For updates, check if the found position is not the current one
+            if (operation === 'update') {
+              const currentId = originalDoc?.id
+              const hasConflict = existingOrder.docs.some((position) => position.id !== currentId)
+              if (hasConflict) {
+                throw new APIError(
+                  `A position with order ${data.order} already exists. Please choose a different order value.`,
+                  400,
+                )
+              }
+            } else if (existingOrder.totalDocs > 0) {
+              throw new APIError(
+                `A position with order ${data.order} already exists. Please choose a different order value.`,
+                400,
+              )
+            }
+          }
+        }
+        return data
+      },
+    ],
     beforeChange: [
       async ({ data, operation }) => {
         // Validate that if not current, endDate must be provided
