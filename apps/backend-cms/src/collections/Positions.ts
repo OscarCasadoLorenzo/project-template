@@ -47,7 +47,7 @@ const getByCompany: Endpoint = {
       }
 
       const experiences = await req.payload.find({
-        collection: 'professional-experience',
+        collection: 'positions',
         where: {
           company: {
             contains: decodeURIComponent(company),
@@ -59,7 +59,7 @@ const getByCompany: Endpoint = {
         overrideAccess: false,
       })
 
-      return Response.json(positions)
+      return Response.json(experiences)
     } catch (error) {
       throw new APIError('Failed to fetch positions by company', 500)
     }
