@@ -39,6 +39,7 @@ export const adminOrEditor: Access = ({ req: { user } }) => {
 /**
  * Public can read published content, authenticated users can read all
  * Use for content with published/draft states
+ * Note: Uses 'status' field for custom collections (e.g., blog-posts)
  */
 export const authenticatedOrPublished: Access = ({ req: { user } }) => {
   // Authenticated users see everything
@@ -46,7 +47,7 @@ export const authenticatedOrPublished: Access = ({ req: { user } }) => {
 
   // Public sees only published content
   return {
-    _status: {
+    status: {
       equals: 'published',
     },
   }
