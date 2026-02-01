@@ -69,6 +69,7 @@ export interface Config {
   collections: {
     users: User
     media: Media
+    positions: Position
     'payload-kv': PayloadKv
     'payload-locked-documents': PayloadLockedDocument
     'payload-preferences': PayloadPreference
@@ -78,6 +79,7 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>
     media: MediaSelect<false> | MediaSelect<true>
+    positions: PositionsSelect<false> | PositionsSelect<true>
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>
     'payload-locked-documents':
       | PayloadLockedDocumentsSelect<false>
@@ -124,6 +126,10 @@ export interface UserAuthOperations {
  */
 export interface User {
   id: number
+  /**
+   * User roles for access control
+   */
+  roles: ('admin' | 'editor' | 'user')[]
   updatedAt: string
   createdAt: string
   email: string
@@ -163,6 +169,87 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "positions".
+ */
+export interface Position {
+  id: number
+  /**
+   * Job title or role (e.g., "Frontend Developer", "Senior Engineer")
+   */
+  role: string
+  /**
+   * Company or organization name
+   */
+  company: string
+  /**
+   * Work location (e.g., "San Francisco, CA", "Remote")
+   */
+  location?: string | null
+  /**
+   * Start date of employment
+   */
+  startDate: string
+  /**
+   * End date of employment (leave empty if current)
+   */
+  endDate?: string | null
+  /**
+   * Check if this is your current position
+   */
+  isCurrent?: boolean | null
+  /**
+   * Detailed description of responsibilities, achievements, and key projects
+   */
+  description: {
+    root: {
+      type: string
+      children: {
+        type: any
+        version: number
+        [k: string]: unknown
+      }[]
+      direction: ('ltr' | 'rtl') | null
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | ''
+      indent: number
+      version: number
+    }
+    [k: string]: unknown
+  }
+  /**
+   * Technologies and skills used in this role
+   */
+  skills?:
+    | {
+        skill: string
+        id?: string | null
+      }[]
+    | null
+  /**
+   * Company logo or brand image
+   */
+  logo?: (number | null) | Media
+  /**
+   * Sort order (lower numbers appear first, typically use negative for manual priority)
+   */
+  order?: number | null
+  /**
+   * Key achievements or highlights (bullet points)
+   */
+  highlights?:
+    | {
+        highlight: string
+        id?: string | null
+      }[]
+    | null
+  /**
+   * Company website URL
+   */
+  companyWebsite?: string | null
+  updatedAt: string
+  createdAt: string
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -192,6 +279,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media'
         value: number | Media
+      } | null)
+    | ({
+        relationTo: 'positions'
+        value: number | Position
       } | null)
   globalSlug?: string | null
   user: {
@@ -240,6 +331,7 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  roles?: T
   updatedAt?: T
   createdAt?: T
   email?: T
@@ -274,6 +366,36 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T
   focalX?: T
   focalY?: T
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "positions_select".
+ */
+export interface PositionsSelect<T extends boolean = true> {
+  role?: T
+  company?: T
+  location?: T
+  startDate?: T
+  endDate?: T
+  isCurrent?: T
+  description?: T
+  skills?:
+    | T
+    | {
+        skill?: T
+        id?: T
+      }
+  logo?: T
+  order?: T
+  highlights?:
+    | T
+    | {
+        highlight?: T
+        id?: T
+      }
+  companyWebsite?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
