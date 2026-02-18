@@ -98,9 +98,7 @@ export interface Config {
   globals: {}
   globalsSelect: {}
   locale: null
-  user: User & {
-    collection: 'users'
-  }
+  user: User
   jobs: {
     tasks: unknown
     workflows: unknown
@@ -131,6 +129,10 @@ export interface UserAuthOperations {
 export interface User {
   id: number
   /**
+   * Full name of the user
+   */
+  name: string
+  /**
    * User roles for access control
    */
   roles: ('admin' | 'editor' | 'user')[]
@@ -151,6 +153,7 @@ export interface User {
       }[]
     | null
   password?: string | null
+  collection: 'users'
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -158,7 +161,15 @@ export interface User {
  */
 export interface Media {
   id: number
-  alt: string
+  /**
+   * Alternative text for accessibility
+   */
+  alt?: string | null
+  /**
+   * Public files are accessible via CDN, private require authentication
+   */
+  visibility: 'public' | 'private'
+  prefix?: string | null
   updatedAt: string
   createdAt: string
   url?: string | null
@@ -221,6 +232,10 @@ export interface BlogPost {
    * Publication status of the blog post
    */
   status: 'draft' | 'published' | 'archived'
+  /**
+   * Mark this blog post as featured to display it prominently on the blog page
+   */
+  isFeatured?: boolean | null
   /**
    * Publication date (automatically set when status changes to published)
    */
@@ -297,15 +312,6 @@ export interface Position {
    */
   order?: number | null
   /**
-   * Key achievements or highlights (bullet points)
-   */
-  highlights?:
-    | {
-        highlight: string
-        id?: string | null
-      }[]
-    | null
-  /**
    * Company website URL
    */
   companyWebsite?: string | null
@@ -319,7 +325,7 @@ export interface Position {
 export interface Skill {
   id: number
   /**
-   * Skill name (e.g., "TypeScript", "Docker", "React")
+   * Skill name (e.g., "TypeScript", "Docker", "React") - must be unique
    */
   name: string
   /**
@@ -349,14 +355,6 @@ export interface Skill {
         | 'blockchain'
       )[]
     | null
-  /**
-   * Short description or notes about this skill
-   */
-  description?: string | null
-  /**
-   * Skill icon or logo (optional)
-   */
-  icon?: (number | null) | Media
   /**
    * Sort order within category (lower numbers appear first)
    */
@@ -455,6 +453,7 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  name?: T
   roles?: T
   updatedAt?: T
   createdAt?: T
@@ -479,6 +478,8 @@ export interface UsersSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T
+  visibility?: T
+  prefix?: T
   updatedAt?: T
   createdAt?: T
   url?: T
@@ -503,6 +504,7 @@ export interface BlogPostsSelect<T extends boolean = true> {
   coverImage?: T
   tags?: T
   status?: T
+  isFeatured?: T
   publishedAt?: T
   author?: T
   readingTime?: T
@@ -524,12 +526,6 @@ export interface PositionsSelect<T extends boolean = true> {
   skills?: T
   logo?: T
   order?: T
-  highlights?:
-    | T
-    | {
-        highlight?: T
-        id?: T
-      }
   companyWebsite?: T
   updatedAt?: T
   createdAt?: T
@@ -541,8 +537,6 @@ export interface PositionsSelect<T extends boolean = true> {
 export interface SkillsSelect<T extends boolean = true> {
   name?: T
   categories?: T
-  description?: T
-  icon?: T
   order?: T
   updatedAt?: T
   createdAt?: T

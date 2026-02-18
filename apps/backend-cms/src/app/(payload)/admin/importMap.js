@@ -21,7 +21,9 @@ import { BlockquoteFeatureClient as BlockquoteFeatureClient_e70f5e05f09f93e00b99
 import { UploadFeatureClient as UploadFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { HorizontalRuleFeatureClient as HorizontalRuleFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { InlineToolbarFeatureClient as InlineToolbarFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
-import { CollectionCards as CollectionCards_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
+import { LogoutButton as LogoutButton_83c7559447fc16ede9ee764d8a352dd1 } from '@/components/Logout'
+import { S3ClientUploadHandler as S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24 } from '@payloadcms/storage-s3/client'
+import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 export const importMap = {
   '@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell':
@@ -70,5 +72,8 @@ export const importMap = {
     HorizontalRuleFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   '@payloadcms/richtext-lexical/client#InlineToolbarFeatureClient':
     InlineToolbarFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
-  '@payloadcms/ui/rsc#CollectionCards': CollectionCards_ab83ff7e88da8d3530831f296ec4756a,
+  '@/components/Logout#LogoutButton': LogoutButton_83c7559447fc16ede9ee764d8a352dd1,
+  '@payloadcms/storage-s3/client#S3ClientUploadHandler':
+    S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24,
+  '@payloadcms/next/rsc#CollectionCards': CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1,
 }
