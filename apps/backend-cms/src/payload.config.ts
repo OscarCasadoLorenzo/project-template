@@ -1,8 +1,8 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import { s3Storage } from '@payloadcms/storage-s3'
 import path from 'path'
 import { buildConfig } from 'payload'
-import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
 import { BlogPosts } from './collections/BlogPosts'
@@ -20,6 +20,9 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    components: {
+      actions: ['@/components/Logout#LogoutButton'],
+    },
   },
   collections: [Users, Media, BlogPosts, Positions, Skills],
   editor: lexicalEditor(),
@@ -32,6 +35,40 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || '',
     },
   }),
-  sharp,
-  plugins: [],
+  plugins: [
+    s3Storage({
+      collections: {
+        media: {
+          prefix: process.env.R2_PREFIX || 'media',
+          // Use public R2 URL for direct public access
+          disablePayloadAccessControl: true,
+          generateFileURL: ({ filename, prefix }) => {
+            return `${process.env.R2_PUBLIC_URL}/${prefix}/${filename}`
+          },
+        },
+      },
+      bucket: process.env.R2_BUCKET || '',
+      config: {
+        credentials: {
+          accessKeyId: process.env.R2_ACCESS_KEY || '',
+          secretAccessKey: process.env.R2_SECRET_KEY || '',
+        },
+        endpoint: process.env.R2_ENDPOINT,
+        region: 'auto', // Cloudflare R2 uses 'auto' as region
+        forcePathStyle: true, // Required for R2
+      },
+    }),
+  ],
+  cors: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3003',
+    process.env.FRONTEND_URL || '',
+  ].filter(Boolean),
+  csrf: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3003',
+    process.env.FRONTEND_URL || '',
+  ].filter(Boolean),
 })
