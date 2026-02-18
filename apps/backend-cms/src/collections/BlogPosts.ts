@@ -227,6 +227,7 @@ const getPublishedPosts: Endpoint = {
       const page = parseInt(searchParams.get('page') || '1', 10)
       const limit = parseInt(searchParams.get('limit') || '10', 10)
       const tag = searchParams.get('tag')
+      const featured = searchParams.get('featured')
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const where: any = {
@@ -241,13 +242,19 @@ const getPublishedPosts: Endpoint = {
         }
       }
 
+      if (featured === 'true') {
+        where.isFeatured = {
+          equals: true,
+        }
+      }
+
       const posts = await req.payload.find({
         collection: 'blog-posts',
         where,
         sort: '-publishedAt',
         page,
         limit,
-        depth: 2,
+        depth: 3,
         req,
         overrideAccess: false,
       })
@@ -281,7 +288,7 @@ const getBySlug: Endpoint = {
           },
         },
         limit: 1,
-        depth: 2,
+        depth: 3,
         req,
         overrideAccess: false,
       })
@@ -491,6 +498,16 @@ export const BlogPosts: CollectionConfig = {
       ],
       admin: {
         description: 'Publication status of the blog post',
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'isFeatured',
+      type: 'checkbox',
+      defaultValue: false,
+      index: true,
+      admin: {
+        description: 'Mark this blog post as featured to display it prominently on the blog page',
         position: 'sidebar',
       },
     },

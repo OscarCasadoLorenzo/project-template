@@ -200,20 +200,6 @@ export const Positions: CollectionConfig = {
       },
     },
     {
-      name: 'highlights',
-      type: 'array',
-      admin: {
-        description: 'Key achievements or highlights (bullet points)',
-      },
-      fields: [
-        {
-          name: 'highlight',
-          type: 'text',
-          required: true,
-        },
-      ],
-    },
-    {
       name: 'companyWebsite',
       type: 'text',
       admin: {
