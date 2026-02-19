@@ -59,128 +59,126 @@ export type SupportedTimezones =
   | 'Pacific/Guam'
   | 'Pacific/Noumea'
   | 'Pacific/Auckland'
-  | 'Pacific/Fiji'
+  | 'Pacific/Fiji';
 
 export interface Config {
   auth: {
-    users: UserAuthOperations
-  }
-  blocks: {}
+    users: UserAuthOperations;
+  };
+  blocks: {};
   collections: {
-    users: User
-    media: Media
-    'blog-posts': BlogPost
-    positions: Position
-    skills: Skill
-    'payload-kv': PayloadKv
-    'payload-locked-documents': PayloadLockedDocument
-    'payload-preferences': PayloadPreference
-    'payload-migrations': PayloadMigration
-  }
-  collectionsJoins: {}
+    users: User;
+    media: Media;
+    'blog-posts': BlogPost;
+    positions: Position;
+    skills: Skill;
+    'payload-kv': PayloadKv;
+    'payload-locked-documents': PayloadLockedDocument;
+    'payload-preferences': PayloadPreference;
+    'payload-migrations': PayloadMigration;
+  };
+  collectionsJoins: {};
   collectionsSelect: {
-    users: UsersSelect<false> | UsersSelect<true>
-    media: MediaSelect<false> | MediaSelect<true>
-    'blog-posts': BlogPostsSelect<false> | BlogPostsSelect<true>
-    positions: PositionsSelect<false> | PositionsSelect<true>
-    skills: SkillsSelect<false> | SkillsSelect<true>
-    'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>
-    'payload-locked-documents':
-      | PayloadLockedDocumentsSelect<false>
-      | PayloadLockedDocumentsSelect<true>
-    'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>
-    'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>
-  }
+    users: UsersSelect<false> | UsersSelect<true>;
+    media: MediaSelect<false> | MediaSelect<true>;
+    'blog-posts': BlogPostsSelect<false> | BlogPostsSelect<true>;
+    positions: PositionsSelect<false> | PositionsSelect<true>;
+    skills: SkillsSelect<false> | SkillsSelect<true>;
+    'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
+    'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
+    'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
+    'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
+  };
   db: {
-    defaultIDType: number
-  }
-  fallbackLocale: null
-  globals: {}
-  globalsSelect: {}
-  locale: null
-  user: User
+    defaultIDType: number;
+  };
+  fallbackLocale: null;
+  globals: {};
+  globalsSelect: {};
+  locale: null;
+  user: User;
   jobs: {
-    tasks: unknown
-    workflows: unknown
-  }
+    tasks: unknown;
+    workflows: unknown;
+  };
 }
 export interface UserAuthOperations {
   forgotPassword: {
-    email: string
-    password: string
-  }
+    email: string;
+    password: string;
+  };
   login: {
-    email: string
-    password: string
-  }
+    email: string;
+    password: string;
+  };
   registerFirstUser: {
-    email: string
-    password: string
-  }
+    email: string;
+    password: string;
+  };
   unlock: {
-    email: string
-    password: string
-  }
+    email: string;
+    password: string;
+  };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
-  id: number
+  id: number;
   /**
    * Full name of the user
    */
-  name: string
+  name: string;
   /**
    * User roles for access control
    */
-  roles: ('admin' | 'editor' | 'user')[]
-  updatedAt: string
-  createdAt: string
-  email: string
-  resetPasswordToken?: string | null
-  resetPasswordExpiration?: string | null
-  salt?: string | null
-  hash?: string | null
-  loginAttempts?: number | null
-  lockUntil?: string | null
+  roles: ('admin' | 'editor' | 'user')[];
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
   sessions?:
     | {
-        id: string
-        createdAt?: string | null
-        expiresAt: string
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
       }[]
-    | null
-  password?: string | null
-  collection: 'users'
+    | null;
+  password?: string | null;
+  collection: 'users';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
  */
 export interface Media {
-  id: number
+  id: number;
   /**
    * Alternative text for accessibility
    */
-  alt?: string | null
+  alt?: string | null;
   /**
    * Public files are accessible via CDN, private require authentication
    */
-  visibility: 'public' | 'private'
-  prefix?: string | null
-  updatedAt: string
-  createdAt: string
-  url?: string | null
-  thumbnailURL?: string | null
-  filename?: string | null
-  mimeType?: string | null
-  filesize?: number | null
-  width?: number | null
-  height?: number | null
-  focalX?: number | null
-  focalY?: number | null
+  visibility: 'public' | 'private';
+  prefix?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
 }
 /**
  * Blog posts, articles, and case studies for your portfolio
@@ -189,145 +187,145 @@ export interface Media {
  * via the `definition` "blog-posts".
  */
 export interface BlogPost {
-  id: number
+  id: number;
   /**
    * Blog post title (3-200 characters)
    */
-  title: string
+  title: string;
   /**
    * SEO-friendly URL slug (auto-generated from title if not provided, must be unique)
    */
-  slug: string
+  slug: string;
   /**
    * Main blog post content with rich text formatting, images, and code blocks
    */
   content: {
     root: {
-      type: string
+      type: string;
       children: {
-        type: any
-        version: number
-        [k: string]: unknown
-      }[]
-      direction: ('ltr' | 'rtl') | null
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | ''
-      indent: number
-      version: number
-    }
-    [k: string]: unknown
-  }
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
   /**
    * Short summary for previews and SEO (auto-generated from content if not provided, max 300 characters)
    */
-  excerpt?: string | null
+  excerpt?: string | null;
   /**
    * Featured image for the blog post
    */
-  coverImage?: (number | null) | Media
+  coverImage?: (number | null) | Media;
   /**
    * Tags for categorization and filtering (e.g., "typescript", "react", "tutorial")
    */
-  tags?: string[] | null
+  tags?: string[] | null;
   /**
    * Publication status of the blog post
    */
-  status: 'draft' | 'published' | 'archived'
+  status: 'draft' | 'published' | 'archived';
   /**
    * Mark this blog post as featured to display it prominently on the blog page
    */
-  isFeatured?: boolean | null
+  isFeatured?: boolean | null;
   /**
    * Publication date (automatically set when status changes to published)
    */
-  publishedAt?: string | null
+  publishedAt?: string | null;
   /**
    * Author of the blog post
    */
-  author: number | User
+  author: number | User;
   /**
    * Estimated reading time in minutes (auto-calculated from content)
    */
-  readingTime?: number | null
-  updatedAt: string
-  createdAt: string
+  readingTime?: number | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "positions".
  */
 export interface Position {
-  id: number
+  id: number;
   /**
    * Job title or role (e.g., "Frontend Developer", "Senior Engineer")
    */
-  role: string
+  role: string;
   /**
    * Company or organization name
    */
-  company: string
+  company: string;
   /**
    * Work location (e.g., "San Francisco, CA", "Remote")
    */
-  location?: string | null
+  location?: string | null;
   /**
    * Start date of employment
    */
-  startDate: string
+  startDate: string;
   /**
    * End date of employment (leave empty if current)
    */
-  endDate?: string | null
+  endDate?: string | null;
   /**
    * Check if this is your current position
    */
-  isCurrent?: boolean | null
+  isCurrent?: boolean | null;
   /**
    * Detailed description of responsibilities, achievements, and key projects
    */
   description: {
     root: {
-      type: string
+      type: string;
       children: {
-        type: any
-        version: number
-        [k: string]: unknown
-      }[]
-      direction: ('ltr' | 'rtl') | null
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | ''
-      indent: number
-      version: number
-    }
-    [k: string]: unknown
-  }
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
   /**
    * Technologies and skills used in this role
    */
-  skills?: (number | Skill)[] | null
+  skills?: (number | Skill)[] | null;
   /**
    * Company logo or brand image
    */
-  logo?: (number | null) | Media
+  logo?: (number | null) | Media;
   /**
    * Sort order (lower numbers appear first, typically use negative for manual priority)
    */
-  order?: number | null
+  order?: number | null;
   /**
    * Company website URL
    */
-  companyWebsite?: string | null
-  updatedAt: string
-  createdAt: string
+  companyWebsite?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "skills".
  */
 export interface Skill {
-  id: number
+  id: number;
   /**
    * Skill name (e.g., "TypeScript", "Docker", "React") - must be unique
    */
-  name: string
+  name: string;
   /**
    * Skill categories (can select multiple)
    */
@@ -354,240 +352,241 @@ export interface Skill {
         | 'performance'
         | 'blockchain'
       )[]
-    | null
+    | null;
   /**
    * Sort order within category (lower numbers appear first)
    */
-  order?: number | null
-  updatedAt: string
-  createdAt: string
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
-  id: number
-  key: string
+  id: number;
+  key: string;
   data:
     | {
-        [k: string]: unknown
+        [k: string]: unknown;
       }
     | unknown[]
     | string
     | number
     | boolean
-    | null
+    | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
-  id: number
+  id: number;
   document?:
     | ({
-        relationTo: 'users'
-        value: number | User
+        relationTo: 'users';
+        value: number | User;
       } | null)
     | ({
-        relationTo: 'media'
-        value: number | Media
+        relationTo: 'media';
+        value: number | Media;
       } | null)
     | ({
-        relationTo: 'blog-posts'
-        value: number | BlogPost
+        relationTo: 'blog-posts';
+        value: number | BlogPost;
       } | null)
     | ({
-        relationTo: 'positions'
-        value: number | Position
+        relationTo: 'positions';
+        value: number | Position;
       } | null)
     | ({
-        relationTo: 'skills'
-        value: number | Skill
-      } | null)
-  globalSlug?: string | null
+        relationTo: 'skills';
+        value: number | Skill;
+      } | null);
+  globalSlug?: string | null;
   user: {
-    relationTo: 'users'
-    value: number | User
-  }
-  updatedAt: string
-  createdAt: string
+    relationTo: 'users';
+    value: number | User;
+  };
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-preferences".
  */
 export interface PayloadPreference {
-  id: number
+  id: number;
   user: {
-    relationTo: 'users'
-    value: number | User
-  }
-  key?: string | null
+    relationTo: 'users';
+    value: number | User;
+  };
+  key?: string | null;
   value?:
     | {
-        [k: string]: unknown
+        [k: string]: unknown;
       }
     | unknown[]
     | string
     | number
     | boolean
-    | null
-  updatedAt: string
-  createdAt: string
+    | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-migrations".
  */
 export interface PayloadMigration {
-  id: number
-  name?: string | null
-  batch?: number | null
-  updatedAt: string
-  createdAt: string
+  id: number;
+  name?: string | null;
+  batch?: number | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
-  name?: T
-  roles?: T
-  updatedAt?: T
-  createdAt?: T
-  email?: T
-  resetPasswordToken?: T
-  resetPasswordExpiration?: T
-  salt?: T
-  hash?: T
-  loginAttempts?: T
-  lockUntil?: T
+  name?: T;
+  roles?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
   sessions?:
     | T
     | {
-        id?: T
-        createdAt?: T
-        expiresAt?: T
-      }
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
-  alt?: T
-  visibility?: T
-  prefix?: T
-  updatedAt?: T
-  createdAt?: T
-  url?: T
-  thumbnailURL?: T
-  filename?: T
-  mimeType?: T
-  filesize?: T
-  width?: T
-  height?: T
-  focalX?: T
-  focalY?: T
+  alt?: T;
+  visibility?: T;
+  prefix?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "blog-posts_select".
  */
 export interface BlogPostsSelect<T extends boolean = true> {
-  title?: T
-  slug?: T
-  content?: T
-  excerpt?: T
-  coverImage?: T
-  tags?: T
-  status?: T
-  isFeatured?: T
-  publishedAt?: T
-  author?: T
-  readingTime?: T
-  updatedAt?: T
-  createdAt?: T
+  title?: T;
+  slug?: T;
+  content?: T;
+  excerpt?: T;
+  coverImage?: T;
+  tags?: T;
+  status?: T;
+  isFeatured?: T;
+  publishedAt?: T;
+  author?: T;
+  readingTime?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "positions_select".
  */
 export interface PositionsSelect<T extends boolean = true> {
-  role?: T
-  company?: T
-  location?: T
-  startDate?: T
-  endDate?: T
-  isCurrent?: T
-  description?: T
-  skills?: T
-  logo?: T
-  order?: T
-  companyWebsite?: T
-  updatedAt?: T
-  createdAt?: T
+  role?: T;
+  company?: T;
+  location?: T;
+  startDate?: T;
+  endDate?: T;
+  isCurrent?: T;
+  description?: T;
+  skills?: T;
+  logo?: T;
+  order?: T;
+  companyWebsite?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "skills_select".
  */
 export interface SkillsSelect<T extends boolean = true> {
-  name?: T
-  categories?: T
-  order?: T
-  updatedAt?: T
-  createdAt?: T
+  name?: T;
+  categories?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
-  key?: T
-  data?: T
+  key?: T;
+  data?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents_select".
  */
 export interface PayloadLockedDocumentsSelect<T extends boolean = true> {
-  document?: T
-  globalSlug?: T
-  user?: T
-  updatedAt?: T
-  createdAt?: T
+  document?: T;
+  globalSlug?: T;
+  user?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-preferences_select".
  */
 export interface PayloadPreferencesSelect<T extends boolean = true> {
-  user?: T
-  key?: T
-  value?: T
-  updatedAt?: T
-  createdAt?: T
+  user?: T;
+  key?: T;
+  value?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-migrations_select".
  */
 export interface PayloadMigrationsSelect<T extends boolean = true> {
-  name?: T
-  batch?: T
-  updatedAt?: T
-  createdAt?: T
+  name?: T;
+  batch?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "auth".
  */
 export interface Auth {
-  [k: string]: unknown
+  [k: string]: unknown;
 }
+
 
 declare module 'payload' {
   export interface GeneratedTypes extends Config {}
